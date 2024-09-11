@@ -1,0 +1,6 @@
+{
+  "vendor" : true,
+  "imports": {
+    "@std/assert": "jsr:@std/assert"
+  }
+}
