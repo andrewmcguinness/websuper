@@ -11,17 +11,17 @@ Deno.test("solar", () => {
 });
 
 Deno.test("farming_dry", () => {
-  const sol = new ShipTypeData.farming.create('TEST2', ShipTypeData.farming);
-  sol.location = { bays: [] };
-  const up = sol.launch();
+  const frm = new ShipTypeData.farming.create('TEST2', ShipTypeData.farming);
+  frm.location = { bays: [] };
+  const up = frm.launch();
   assert(up.is_error);
 });
 
 Deno.test("farming_wet", () => {
-  const sol = new ShipTypeData.farming.create('TEST2', ShipTypeData.farming);
-  sol.location = { bays: [], take_resource(f, x) { return x; } }
-  sol.add_fuel(200);
-  const up = sol.launch();
-  assertEquals(sol.fuel, 100);
-  assertEquals(sol.state, ShipState.orbit);
+  const frm = new ShipTypeData.farming.create('TEST2', ShipTypeData.farming);
+  frm.location = { bays: [], take_resource(f, x) { return x; } }
+  frm.add_fuel(200);
+  const up = frm.launch();
+  assertEquals(frm.fuel, 100);
+  assertEquals(frm.state, ShipState.orbit);
 });

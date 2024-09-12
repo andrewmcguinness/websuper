@@ -131,9 +131,11 @@ export class Planet {
 
   land(ship) {
     if (this.surface_free) {
-      ship.leave();
       this.surface[this.#first_space('surface')] = ship;
+      ship.land(this);
+      return ship;
     }
+    return Core.error('no space to land');
   }
 
   #first_space(area) {
@@ -187,4 +189,5 @@ export class Planet {
     else return Core.error("no bay free");
   }
 
+  
 }

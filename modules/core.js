@@ -16,7 +16,7 @@ class Coreclass {
   }
 
   get flags() { return {
-    hydro: false,
+    hybrid: false,
     drug: false,
     drill: false,
     valve: false,

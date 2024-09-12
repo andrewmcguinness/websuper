@@ -1,7 +1,7 @@
 import { Core } from "../modules/core.js";
 import { Planet } from "../modules/planet.js";
 import { Super } from "../modules/super.js";
-import { ShipTypeData } from "../modules/ships.js";
+import { ShipTypeData, ShipState } from "../modules/ships.js";
 import { test_random } from "./util.js";
 import { assertEquals } from "@std/assert";
 
@@ -60,4 +60,24 @@ Deno.test("energy2", () => {
   Core.check(sb.dock_ship(sol1));
   game.tick();
   assertEquals(sb.energy, 2846);
+});
+
+Deno.test("food", () => {
+  test_random([200, 11832, 250]);
+  const game = new Super();
+  const sb = game.starbase;
+  assertEquals(sb.food, 2250);
+  const it = game.buy_ship(ShipTypeData.farming, 'TEST');
+  Core.check(sb.land(it));
+  assertEquals(it.state, ShipState.landed);
+  game.tick();
+  assertEquals(sb.food, 2243);
+  assertEquals(sb.energy, 2030);
+  it.active = true;
+  game.tick();
+  assertEquals(sb.food, 2248);
+  assertEquals(sb.energy, 2029);
+  game.tick();
+  assertEquals(sb.food, 2253);
+  assertEquals(sb.energy, 2028);
 });

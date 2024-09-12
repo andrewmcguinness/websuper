@@ -34,6 +34,9 @@ class Ship {
     };
   };
 
+  // placeholder for now
+  messages = [];
+
   get uses_fuel() { return (this.type.tank != 0); }
 
   leave() {
@@ -91,6 +94,12 @@ class Ship {
     this.leave();
   };
 
+  land(planet) {
+    this.state = ShipState.landed;
+    if (this.active) this.active = false;
+    this.leave();
+  };
+
   move() {
     if (this.state == ShipState.transit) {
       if (this.uses_fuel) {
@@ -105,6 +114,29 @@ class Ship {
       }
     }
     return false;
+  }
+}
+
+class Farming extends Ship {
+  constructor(name) {
+    super(name, ShipTypeData.farming);
+  }
+
+  tick() {
+    this.move();
+    if (this.state == ShipState.landed) {
+      if (this.active) {
+        const power = this.location.try_take_resource("energy", 1);
+        if (power == 1) {
+          const food = (this.location.flags.hybrid?27:12) +
+                ((this.location.type == Core.Types.jungle)?28:0);
+          this.location.add_resource("food", food);
+        } else {
+          this.active = false;
+          this.messages.add('Run out of energy on ' + this.location.name);
+        }
+      }
+    }
   }
 }
 
@@ -192,7 +224,7 @@ export const ShipTypeData = Object.fromEntries([
                    17999, 600, 875, 294,   1400, 950, 0, 0, Ship),
   new TypeDataItem("farming", "Horticultural Station",
                    "Generates food supplies when running on surface",
-                   16995, 540, 970, 175,    750, 950, 0, 0, Ship),
+                   16995, 540, 970, 175,    750, 950, 0, 0, Farming),
   new TypeDataItem("cargo", "Cargo Store / Carrier",
                    "Deep space heavy duty cargo / personnel carrier",
                    15400, 125, 465, 11,    1250, 2250, 1850, 0, Ship)
