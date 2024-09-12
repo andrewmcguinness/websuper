@@ -1,3 +1,9 @@
+class Error {
+  constructor(msg) { this.text = msg; }
+  get is_error() { return true; }
+  toString() { return this.text; }
+};
+
 class Coreclass {
   random(min, max) {
     const r = new Uint32Array(1);
@@ -30,6 +36,12 @@ class Coreclass {
     jungle: 'jungle',
     volcano: 'volcanic'
   });
+
+  error(msg) { return new Error(msg); }
+  check(...objs) {
+    for (const o of objs)
+      if (o.is_error) throw o;
+  }
 };
 
 export const Core = new Coreclass();

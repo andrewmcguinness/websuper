@@ -17,6 +17,52 @@ export class Planet {
     this.orbit = [];
   }
 
+  static resource = [ "food", "minerals", "fuel", "energy",
+                      "population", "credits" ];
+  static #max = { food: 30000, minerals: 30000, fuel: 30000, energy: 30000,
+                  population: 30000, credits: 2000000000 };
+
+  add_resource(r, amount) {
+    if (r in Planet.#max) {
+      const capacity = Planet.#max[r] - this[r];
+      if (amount <= capacity) {
+        this[r] += amount;
+        return amount;
+      } else {
+        this[r] += capacity;
+        return capacity;
+      }
+    }
+    throw('bad resource ' + r);
+  }
+
+  take_resource(r, amount) {
+    if (r in this.#max) {
+      const capacity = this[r];
+      if (amount <= capacity) {
+        this[r] -= amount;
+        return amount;
+      } else {
+        this[r] -= capacity;
+        return capacity;
+      }
+    }
+    throw('bad resource ' + r);
+  }
+  
+  try_take_resource(r, amount) {
+    if (r in Planet.#max) {
+      const capacity = this[r];
+      if (amount <= capacity) {
+        this[r] -= amount;
+        return amount;
+      } else {
+        return 0;
+      }
+    }
+    throw('bad resource ' + r);
+  }
+
   static starbase() {
     const s = new Planet(31);
     s.type = Types.urban;
@@ -51,7 +97,7 @@ export class Planet {
     if (this.state == States.formatting) {
       this.type = Core.randomChoice(Types);
       this.name = this.format.name;
-      this.mineral = 20;
+      this.minerals = 20;
       this.energy = 35;
       this.fuel = 150;
       this.pop = Core.random(0, 1000);
@@ -84,9 +130,8 @@ export class Planet {
 
   land(ship) {
     if (this.surface_free) {
+      ship.leave();
       this.surface[this.#first_space('surface')] = ship;
-      const orbit_index = this.orbit.indexOf(ship);
-      if (orbit_index < 0) this.orbit[orbit_index] = null;
     }
   }
 
@@ -131,13 +176,14 @@ export class Planet {
     }
   }
 
-  add_ship(ship, planet) {
+  dock_ship(ship) {
     const planet_i = this.#first_space('bays');
     if (planet_i >= 0) {
       this.bays[planet_i] = ship;
-      ship.location = this;
+      ship.dock(this);
+      return this;
     }
-    else Log.error("no bay free");
+    else return Core.error("no bay free");
   }
 
 }
