@@ -44,15 +44,28 @@ class Ship {
 
   send(planet) {
     if (this.state != ShipState.landed) {
+      const distance = Math.abs(planet.n - this.location.n);
+      const fuel_needed = distance*(Core.flags.valve?25:50);
+      if (this.uses_fuel && (fuel_needed > this.fuel)) {
+        return Core.error("Not enough fuel");
+      }      
       this.leave();
       this.dest = planet;
       this.travel_time = Math.abs(this.location.n - this.dest.n);
       this.state = ShipState.transit;
     }
+    return this;
   };
 
   launch() {
     if (this.state == ShipState.docked) {
+      const launch_fuel = Core.flags.valve?50:100;
+      if (this.uses_fuel) {
+        if (this.fuel < launch_fuel) 
+          return Core.error('not enough fuel');
+        else
+          this.fuel -= launch_fuel;
+      }
       this.state = ShipState.orbit;
       const leaving = this.location.bays;
       const index = leaving.indexOf(this);
@@ -60,6 +73,16 @@ class Ship {
       return this;
     }
     else return Core.error('Not in bay');
+  };
+
+  add_fuel(amount) {
+    if (this.state == ShipState.docked) {
+      const room = this.type.tank - this.fuel;
+      const want = Math.min(amount, room);
+      const got = this.location.take_resource('fuel', want);
+      this.fuel += got;
+      return got;
+    } else return Core.error('Not in dock');
   };
 
   dock(planet) {

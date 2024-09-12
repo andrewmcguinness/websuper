@@ -14,14 +14,14 @@ class Coreclass {
     const a = Object.values(from);
     return a[this.random(0,a.length)];
   }
-  flags = {
+
+  get flags() { return {
     hydro: false,
     drug: false,
     drill: false,
     valve: false,
     micro: false
-  };
-
+  }};
 
   States = Object.freeze({
     barren: 'unformatted',

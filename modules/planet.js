@@ -10,10 +10,11 @@ const sizes = [ 21726, 11353, 7258, 3438, 8559, 2606, 24763, 17561,
                 20340, 13421, 11075, 16245, 6900, 8297, 1372, 10552 ];
 
 export class Planet {
-  constructor(location, size) {
+  constructor(location, flags) {
     this.n = location;
-    this.size = size || sizes[location];
+    this.size = sizes[location];
     this.state = States.barren;
+    this.flags = flags;
     this.orbit = [];
   }
 
@@ -63,8 +64,8 @@ export class Planet {
     throw('bad resource ' + r);
   }
 
-  static starbase() {
-    const s = new Planet(31);
+  static starbase(flags) {
+    const s = new Planet(31, flags);
     s.type = Types.urban;
     s.state = States.player;
     s.pop = Core.random(1500, 2000);
@@ -156,7 +157,7 @@ export class Planet {
       if (mc < 0) ++this.morale;
 
       if ((day % 2) == 1) {
-        const mm = Core.flags.drug?2:3;
+        const mm = this.flags.drug?2:3;
         const t1 = floor(this.morale / mm);
         this.growth = t1 - floor(this.tax / 4) - Math.floor((100 - this.morale)/4);
         if (this.growth > 0) {

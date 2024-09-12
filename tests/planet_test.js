@@ -7,7 +7,7 @@ import { assertEquals } from "@std/assert";
 
 function sb() {
   test_random([200, 11832, 250]);
-  return Planet.starbase();
+  return Planet.starbase(Core.flags);
 };  
 
 Deno.test("starbase", () => {

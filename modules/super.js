@@ -5,10 +5,12 @@ const floor = Math.floor;
 
 export class Super {
   constructor() {
+    this.flags = Core.flags;
+
     const planets = [];
     this.date = 0;
-    for (let i = 0; i < 31; ++i) planets.push(new Planet(i));
-    this.starbase = Planet.starbase();
+    for (let i = 0; i < 31; ++i) planets.push(new Planet(i, this.flags));
+    this.starbase = Planet.starbase(this.flags);
     planets.push(this.starbase);
     this.planets = planets;
     this.ships = Array(24).fill(null);
