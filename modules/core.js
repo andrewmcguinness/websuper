@@ -1,7 +1,15 @@
 class Error {
-  constructor(msg) { this.text = msg; }
+  constructor(msg, attrs) {
+    this.text = msg;
+    this.attrs = attrs;
+  }
   get is_error() { return true; }
-  toString() { return this.text; }
+  toString() {
+    const out = this.text;
+    for (var [k,v]  in (this.attrs || {}))
+      out.append(' ' + k + '=' + v);
+    return out;
+  }
 };
 
 class Coreclass {
@@ -37,16 +45,29 @@ class Coreclass {
     volcano: 'volcanic'
   });
 
-  error(msg) { return new Error(msg); }
+  ShipState = Object.freeze({
+    docked: 'docked',
+    landed: 'landed',
+    orbit: 'orbiting',
+    transit: 'transiting'
+  });
+
+  error(msg, params) { return new Error(msg, params); }
   check(...objs) {
-    for (const o of objs)
+    let i = 0;
+    for (const o of objs) {
+      if (o == null) throw 'arg ' + i + ' is null';
       if (o.is_error) throw o;
+      ++i;
+    }
   }
 };
 
 export const Core = new Coreclass();
 
 export const Log = {
-  error: function(msg) { console.log(msg); }
+  error: function(msg) { console.log('' + Log.e() + ': ' + msg); },
+  e: function() { Log.n = (Log.n || 0) + 1; return Log.n; },
+  n: 0
 };
 

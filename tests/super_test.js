@@ -3,7 +3,7 @@ import { Planet } from "../modules/planet.js";
 import { Super } from "../modules/super.js";
 import { ShipTypeData, ShipState } from "../modules/ships.js";
 import { test_random } from "./util.js";
-import { assertEquals } from "@std/assert";
+import { assert, assertEquals, assertFalse } from "@std/assert";
 
 const States = Core.States;
 
@@ -42,6 +42,7 @@ Deno.test("energy", () => {
   sb.dock_ship(sol);
   game.tick();
   assertEquals(sb.energy, 2920);
+  game.consistency_check();
 });
 
 Deno.test("energy2", () => {
@@ -80,4 +81,26 @@ Deno.test("food", () => {
   game.tick();
   assertEquals(sb.food, 2253);
   assertEquals(sb.energy, 2028);
+});
+
+Deno.test("travel", () => {
+  test_random([200, 11832, 250]);
+  const game = new Super();
+  const atm = game.buy_ship(ShipTypeData.atmos, 'ATMOS1');
+  const p = game.planet(game.starbase.n - 1);
+  atm.send(p);
+  for (let i = 0; i < 16; ++i) game.tick();
+  assertEquals(p.state, States.player);
+  const frm = game.buy_ship(ShipTypeData.farming, 'FARM1');
+  assertFalse(frm.is_error);
+  Core.check(frm.add_fuel(200));
+  assert(frm.launch().is_error);
+  assertEquals(frm.location, game.starbase);
+  Core.check(frm.add_crew(),
+             frm.launch(),
+             frm.send(p));
+  game.tick();
+  Core.check(p.dock_ship(frm),
+             p.land(frm));
+  assertEquals(game.consistency_check(), 0);
 });

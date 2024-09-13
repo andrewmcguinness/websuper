@@ -2,12 +2,7 @@ import { Core } from "./core.js";
 
 const floor = Math.floor;
 
-export const ShipState = Object.freeze({
-  docked: 'docked',
-  landed: 'landed',
-  orbit: 'orbiting',
-  transit: 'transiting'
-});
+export const ShipState = Core.ShipState;
 
 export const ShipType = Object.freeze({
   battle: 'Battleship',
@@ -62,6 +57,9 @@ class Ship {
 
   launch() {
     if (this.state == ShipState.docked) {
+      if (this.crew < this.type.crew) {
+        return Core.error('need a crew');
+      }
       const launch_fuel = Core.flags.valve?50:100;
       if (this.uses_fuel) {
         if (this.fuel < launch_fuel) 
@@ -88,16 +86,28 @@ class Ship {
     } else return Core.error('Not in dock');
   };
 
+  add_crew() {
+    if (this.state == ShipState.docked) {
+      const want = this.type.crew - this.crew;
+      const got = this.location.try_take_resource('pop', want);
+      if (want == got) {
+        this.crew += want;
+        return got;
+      }
+      else return Core.error('Not enough population', { want: want, have: this.location.pop });
+    }
+    else return Core.error('Not in dock');
+  }
+
   dock(planet) {
     this.location = planet;
     this.state = ShipState.docked;
-    this.leave();
   };
 
   land(planet) {
     this.state = ShipState.landed;
     if (this.active) this.active = false;
-    this.leave();
+    return this;
   };
 
   move() {
@@ -170,7 +180,8 @@ class Atmos extends Ship {
       if (--this.format_days == 0) {
         this.location.formatDone();
         this.state = ShipState.landed;
-        this.location.land(this);
+        Core.check(this.location.dock_ship(this),
+                   this.location.land(this));
       }
     }
   }
@@ -187,6 +198,7 @@ class Atmos extends Ship {
   send(planet) {
     super.send(planet);
     this.format_days = floor(planet.size / 250);
+    return this;
   }
 
 };

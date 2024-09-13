@@ -19,9 +19,12 @@ Deno.test("farming_dry", () => {
 
 Deno.test("farming_wet", () => {
   const frm = new ShipTypeData.farming.create('TEST2', ShipTypeData.farming);
-  frm.location = { bays: [], take_resource(f, x) { return x; } }
-  frm.add_fuel(200);
+  frm.location = { bays: [], take_resource(f, x) { return x; },
+                   try_take_resource(f, x) { return x; } }
+  Core.check(frm.add_fuel(200),
+             frm.add_crew());
   const up = frm.launch();
+  Core.check(up);
   assertEquals(frm.fuel, 100);
   assertEquals(frm.state, ShipState.orbit);
 });

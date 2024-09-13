@@ -19,9 +19,9 @@ export class Planet {
   }
 
   static resource = [ "food", "minerals", "fuel", "energy",
-                      "population", "credits" ];
+                      "pop", "credits" ];
   static #max = { food: 30000, minerals: 30000, fuel: 30000, energy: 30000,
-                  population: 30000, credits: 2000000000 };
+                  pop: 30000, credits: 2000000000 };
 
   add_resource(r, amount) {
     if (r in Planet.#max) {
@@ -38,7 +38,7 @@ export class Planet {
   }
 
   take_resource(r, amount) {
-    if (r in this.#max) {
+    if (r in Planet.#max) {
       const capacity = this[r];
       if (amount <= capacity) {
         this[r] -= amount;
@@ -130,8 +130,14 @@ export class Planet {
   }
 
   land(ship) {
+    if (ship.location != this)
+      return Core.error('not at this planet');
+    if (ship.state != Core.ShipState.docked)
+      return Core.error('not docked');
     if (this.surface_free) {
       this.surface[this.#first_space('surface')] = ship;
+      const bay_index = this.bays.indexOf(ship);
+      if (bay_index > -1) this.bays[bay_index] = null;
       ship.land(this);
       return ship;
     }
@@ -182,6 +188,10 @@ export class Planet {
   dock_ship(ship) {
     const planet_i = this.#first_space('bays');
     if (planet_i >= 0) {
+      const orbit_i = this.orbit.indexOf(ship);
+      if (orbit_i >=0) this.orbit.splice(orbit_i, 1);
+      const surface_i = this.surface.indexOf(ship);
+      if (surface_i >= 0) this.surface[surface_i] = null;
       this.bays[planet_i] = ship;
       ship.dock(this);
       return this;

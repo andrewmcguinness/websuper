@@ -1,5 +1,6 @@
-import { Core } from "./core.js";
+import { Core, Log } from "./core.js";
 import { Planet } from "./planet.js";
+import { ShipState } from "./ships.js";
 
 const floor = Math.floor;
 
@@ -62,4 +63,54 @@ export class Super {
     }
     else return Core.error("No free docking bay");
   }
+
+  consistency_check() {
+    const err = Log.error;
+    let ship_count = 0;
+    for (let s of this.ships) {
+      if (s) {
+        ++ship_count;
+        const p = s.location;
+        switch (s.state) {
+        case ShipState.docked:
+          if (!p.bays.includes(s)) {
+            err('ship ' + s.name + ' docked but not in bay');
+          }
+          break;
+        case ShipState.orbit:
+          if (!p.orbit.includes(s)) {
+            err('ship ' + s.name + ' orbiting but not in orbit');
+          }
+          break;
+        case ShipState.landed:
+          if (!p.surface.includes(s)) {
+            err('ship ' + s.name + ' landed but not on surface');
+          }
+          break;
+        }
+      }
+    }
+    let ships_found = 0;
+    for (let p of this.planets) {
+      for (let [area, state] of [['surface', 'landed'],
+                                 ['bays', 'docked'],
+                                 ['orbit', 'orbit']]) {
+        if (p[area]) {
+          for (let s of p[area]) {
+            if (s) {
+              ++ships_found;
+              if (s.state != ShipState[state]) {
+                err('ship ' + s.name + ' ' + s.state + ' but in ' + area);
+              }
+            }
+          }
+        }
+      }
+    }
+    if (ship_count < ships_found) {
+      err('have ' + ship_count + ' ships but found ' + ships_found + ' around planets');
+    }
+    return Log.n;
+  };
+          
 };
