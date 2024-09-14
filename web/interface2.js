@@ -4,6 +4,8 @@ import { ShipTypeData } from "../modules/ships.js";
 
 /* global */
 
+export var game;
+
 function tick() {
   ws.game.tick();
   display_economy();
@@ -24,6 +26,7 @@ function init() {
     current_planet: g.starbase,
     ship_types: Object.values(ShipTypeData)
   };
+  ws = window.ws;
 
   init_economy(g);
   init_ships(g);
@@ -170,14 +173,14 @@ function init_economy(game) {
   insert.insertAdjacentElement('beforebegin', increase);
   
   reduce.addEventListener('click', reduceTax);
-  window.ws.economy_inputs = map;
+  ws.economy_inputs = map;
 }
 
 /* ships screen */
 
 function init_ships(game) {
-  window.ws.current_ship = null;
-  window.ws.ship_list = [];
+  ws.current_ship = null;
+  ws.ship_list = [];
   const table = document.querySelector('#ships .shiptable');
   for (let i = 0; i < 32; ++i) {
     const b = document.createElement('div');
@@ -201,11 +204,11 @@ function init_ships(game) {
 }
 
 function launch_ship(ev) {
-  const ship = window.ws.current_ship;
+  const ship = ws.current_ship;
   if (ship) {
     const result = ship.launch();
     if (result.is_error) {
-      window.ws.ship_message = new temp_message(result.text, 160);
+      ws.ship_message = new temp_message(result.text, 160);
     }
     display_ships();
   }
@@ -215,18 +218,18 @@ function dock_ship(ev) {}
 
 function select_ship_bay(ev) {
   const i = ev.target.dataset.bay_n;
-  const ship = window.ws.ship_bays[i];
+  const ship = ws.ship_bays[i];
   if (ship) {
-    window.ws.current_ship = ship;
+    ws.current_ship = ship;
     display_ships();
   }
 }
 
 function select_ship_cell(ev) {
   const i = ev.target.dataset.n;
-  const ship = window.ws.ship_list[i];
+  const ship = ws.ship_list[i];
   if (ship) {
-    window.ws.current_ship = ship;
+    ws.current_ship = ship;
     display_ships();
   }
 }
@@ -247,22 +250,22 @@ function ship_state_message(ship) {
 }
 function display_ships() {
   const cells = Array.from(document.querySelector('#ships .shiptable').children);
-  const all_ships = window.ws.game.ships.filter(x => x);
-  window.ws.ship_list = Array.from(all_ships);
+  const all_ships = ws.game.ships.filter(x => x);
+  ws.ship_list = Array.from(all_ships);
   for (let i = 0; i < 32; ++i) {
     const b = cells[i];
     const ship = all_ships.shift();
     if (ship) b.textContent = ship.name;
     else b.textContent = '';
   }
-  const ship = window.ws.current_ship;
+  const ship = ws.current_ship;
   const state_box = document.querySelector('#ships .shipstate');
   if (ship) {
     const planet = ship.location;
     if (planet) {
-      state_box.textContent = window.ws.ship_message?.string || ship_state_message(ship);
+      state_box.textContent = ws.ship_message?.string || ship_state_message(ship);
       document.querySelector('#ships .planet span').textContent = planet.name;
-      window.ws.ship_bays = Array.from(planet.bays);
+      ws.ship_bays = Array.from(planet.bays);
       const bays = document.querySelector('#ships .bays').children;
       for (let i = 0; i < 3; ++i) {
         const sb = planet.bays[i]?.name;
@@ -271,7 +274,7 @@ function display_ships() {
       const info = document.querySelector('#ships .info');
       info.querySelector('.shipname').textContent = ship.name;
       info.querySelector('.shipcrew').textContent = ship.crew;
-      info.querySelector('.date').textContent = window.ws.game.datestr;
+      info.querySelector('.date').textContent = ws.game.datestr;
       info.querySelector('.shipfuel').textContent = ship.fuel;
       info.querySelector('.shiptype').textContent = ship.type.name;
     }
@@ -283,9 +286,9 @@ function display_ships() {
 /* buy ship screen */
 
 function display_ship_type() {
-  const it = window.ws.current_ship_type;
-  const sb = window.ws.game.starbase;
-  const count = window.ws.game.ships.filter(s => (s?.type == it)).length;
+  const it = ws.current_ship_type;
+  const sb = ws.game.starbase;
+  const count = ws.game.ships.filter(s => (s?.type == it)).length;
   const range = it.tank?(2*it.tank):'infinite';
   let values = [
     sb.credits,
@@ -313,27 +316,27 @@ function display_ship_type() {
   document.querySelector('#buy .buytype').textContent = 'TYPE : ' + it.name;
 }
 function prev_ship_type(ev) {
-  const t = window.ws.ship_types.indexOf(window.ws.current_ship_type);
-  const n = (t == 0)?(window.ws.ship_types.length - 1):(t-1);
-  window.ws.current_ship_type = window.ws.ship_types[n];
+  const t = ws.ship_types.indexOf(ws.current_ship_type);
+  const n = (t == 0)?(ws.ship_types.length - 1):(t-1);
+  ws.current_ship_type = ws.ship_types[n];
   display_ship_type();
 }
 function buy_ship(ev) {
-  const t = window.ws.current_ship_type;
-  const result = window.ws.game.buy_ship(t, window.ws.game.suggested_name(t));
+  const t = ws.current_ship_type;
+  const result = ws.game.buy_ship(t, ws.game.suggested_name(t));
   if (result.is_error) {
     message(result.msg);
   }
   display_ship_type();
 }
 function next_ship_type(ev) {
-  const t = window.ws.ship_types.indexOf(window.ws.current_ship_type);
-  const n = (t == window.ws.ship_types.length - 1)?0:(t+1);
-  window.ws.current_ship_type = window.ws.ship_types[n];
+  const t = ws.ship_types.indexOf(ws.current_ship_type);
+  const n = (t == ws.ship_types.length - 1)?0:(t+1);
+  ws.current_ship_type = ws.ship_types[n];
   display_ship_type();
 }
 function init_buy(game) {
-  window.ws.current_ship_type = window.ws.ship_types[0];
+  ws.current_ship_type = ws.ship_types[0];
   let handlers = [prev_ship_type, buy_ship, next_ship_type];
   for (let button of document.querySelectorAll('#buy .nav button')) {
     button.addEventListener('click', handlers.shift());
