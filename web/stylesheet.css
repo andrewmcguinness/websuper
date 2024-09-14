@@ -96,16 +96,16 @@ label {
 #ships .top {
     display: flex;
 }
-#ships .top .left {
+.top > .left {
     display: flex;
     flex-direction: column;
 }
-#ships .bays {
+.bays {
     display: grid;
     grid-template-columns: 1fr 4fr;
     row-gap: 2px;
 }
-#ships .bays div:nth-of-type(even) {
+.bays div:nth-of-type(even) {
     display: block;
     width: 10em;
     height: 1.5em;
@@ -185,4 +185,42 @@ div.buyinfo {
 div.buyinfo > div:nth-of-type(odd) {
     text-align: right;
     margin-right: 1ex;
+    display: block;
+    width: 10em;
+    height: 1.5em;
+    font-size: small;
+    font-weight: bold;
+    background-color: black;
+    color: white;
+    padding: 3px 1ex;
+    border: 2px solid white;
+}
+div#docking > div {
+    display: flex;
+    flex-direction: column;
+}
+div#docking .ship div div {
+   text-align: right;
+    margin-right: 1ex;
+    display: block;
+    width: 4em;
+    height: 1.5em;
+    font-size: small;
+    font-weight: bold;
+    background-color: black;
+    color: white;
+    padding: 3px 1ex;
+    border: 2px solid white;
+}
+div#docking, div#docking .top {
+    display: flex;
+    flex-direction: row;
+}
+#docking div.ship {
+    display: flex;
+    flex-direction: row;
+}
+#docking div.ship div {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
 }

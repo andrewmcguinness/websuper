@@ -27,6 +27,7 @@ class Ship {
       energy: 0,
       passengers: 0
     };
+    this.cash_value = 0; // todo
   };
 
   // placeholder for now
@@ -34,6 +35,12 @@ class Ship {
 
   get uses_fuel() { return (this.type.tank != 0); }
 
+  get total_cargo() {
+    return this.cargo.food +
+      this.cargo.fuel +
+      this.cargo.minerals +
+      this.cargo.energy;
+  }
   leave() {
     const leaving = this.location.orbit;
     const index = leaving.indexOf(this);
@@ -71,6 +78,7 @@ class Ship {
       const leaving = this.location.bays;
       const index = leaving.indexOf(this);
       if (index > -1) leaving[index] = null;
+      this.location.orbit.push(this);
       return this;
     }
     else return Core.error('Not in bay');
@@ -85,6 +93,11 @@ class Ship {
       return Core.error('Not in dock');
     this.fuel += quantity;
     if (this.fuel > this.tank) this.fuel = this.tank;
+    return quantity;
+  };
+  remove_fuel(quantity) {
+    this.fuel -= quantity;
+    if (this.fuel < 0) this.fuel = 0;
     return quantity;
   };
 
@@ -102,10 +115,7 @@ class Ship {
   }
 
   get cargo_space() {
-    return this.type.capacity - (this.cargo.food +
-                                 this.cargo.fuel +
-                                 this.cargo.minerals +
-                                 this.cargo.energy);
+    return this.type.capacity - this.total_cargo;
   }
 
   add_cargo(resource, amount) {
@@ -119,6 +129,22 @@ class Ship {
     this.location = planet;
     this.state = ShipState.docked;
   };
+
+  activate() {
+    if (!this.active) {
+      if (this.crew == this.type.crew) {
+        this.active = true;
+      } else {
+        return Core.error('Need a crew!');
+      }
+    }
+    return this;
+  }
+
+  deactivate() {
+    this.active = false;
+    return this;
+  }
 
   land(planet) {
     this.state = ShipState.landed;

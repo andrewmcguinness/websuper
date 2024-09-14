@@ -19,6 +19,11 @@ export class Planet {
     this.growth = 0;
   }
 
+  get food_delta() {
+    if (this.food_yesterday != null)
+      return this.food_today - this.food_yesterday;
+    else return 0;
+  }
   static resource = [ "food", "minerals", "fuel", "energy",
                       "pop", "credits" ];
   static #max = { food: 30000, minerals: 30000, fuel: 30000, energy: 30000,
@@ -87,6 +92,17 @@ export class Planet {
     const want = Math.min(quantity, room);
     const got = this.take_resource('fuel', want);
     return ship.add_fuel(got);
+  }
+  unfuel_ship(ship, quantity) {
+    if (ship.location != this)
+      return Core.error('ship not at planet');
+    if (ship.state != Core.ShipState.docked)
+      return Core.error('ship not docked');
+
+    const room = ship.fuel;
+    const want = Math.min(quantity, room);
+    const got = this.add_resource('fuel', want);
+    return ship.remove_fuel(got);
   }
 
   static starbase(flags) {
@@ -176,7 +192,10 @@ export class Planet {
 
   tick(day) {
     if (this.state == States.player) {
-      this.food_yesterday = this.food;
+      if (day % 2) {
+        this.food_yesterday = this.food_today;
+        this.food_today = this.food;
+      }
       const eat = floor(this.pop / 240);
       if (eat > this.food) this.hunger = true;
       if (eat < this.food) this.hunger = false;

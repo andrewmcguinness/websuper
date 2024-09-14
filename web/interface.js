@@ -8,17 +8,23 @@ var ws;
 var economy;
 var ships;
 var buy;
+var docking;
+var surface;
 
 function tick() {
-  ws.game.tick();
-  economy.display();
-  ships.display();
-  buy.display();
+  const t = ws.game.tick();
+  economy.display(t);
+  ships.display(t);
+  buy.display(t);
+  docking.display(t);
+  surface.display(t);
+  message(ws.messages.get());
 }
 
 function message(msg) {
-  for (let el of document.querySelectorAll('.message'))
-    el.textContent = msg;
+  if (msg)
+    for (let el of document.querySelectorAll('.message'))
+      el.textContent = msg;
 }
 
 function init() {
@@ -26,13 +32,17 @@ function init() {
 
   window.ws = {
     game: g,
-    ship_types: Object.values(ShipTypeData)
+    ship_types: Object.values(ShipTypeData),
+    messages: g.messages.cursor()
   };
   ws = window.ws;
 
   economy = new economy_screen(g);
   ships = new ships_screen(g);
   buy = new buy_ship_screen(g);
+  docking = new docking_screen(g);
+  surface = new surface_screen(g);
+  ws.economy = economy;
 
   economy.display();
   buy.display();
@@ -56,6 +66,14 @@ class temp_message {
       --this.remaining;
       return this.str;
     } else return null;
+  }
+}
+
+function display_bays(elements, ships) {
+  const data = ships || [];
+  for (let i = 0; i < 3; ++i) {
+    const sb = data[i]?.name;
+    elements[i*2+1].textContent = sb || 'BAY EMPTY';
   }
 }
 
@@ -115,12 +133,19 @@ class economy_screen extends screen {
     increase.alt = '^';
     this.onclick(increase, this.increase_tax);
     insert.insertAdjacentElement('beforebegin', increase);
-
     this.onclick(reduce, this.reduce_tax);
+
+    const area_buttons = document.getElementById('areas').children;
+    this.onclick(area_buttons[0], this.select_orbit);
+    this.onclick(area_buttons[1], this.select_surface);
+    this.onclick(area_buttons[2], this.select_bays);
+    this.selected_area = 'surface';
+
     this.inputs = map;
+    this.food_direction = 0;
   }
 
-  display() {
+  display(time) {
     const page = this.inputs;
     const p = this.current_planet;
     let gr = p.growth;
@@ -132,12 +157,12 @@ class economy_screen extends screen {
     page.credits.textContent = p.credits;
 
     let foodstr = String(p.food);
-    if (p.food_yesterday) {
-      if (p.food_yesterday < p.food)
+    const delta = p.food_delta;
+    if (delta > 0)
       foodstr = pos(p.food);
-      else if (p.food_yesterday > p.food)
-        foodstr = neg(p.food);
-    }
+    else if (delta < 0)
+      foodstr = neg(p.food);
+
     page.food.textContent = foodstr;
     page.minerals.textContent = p.minerals;
     page.fuel.textContent = p.fuel;
@@ -149,6 +174,26 @@ class economy_screen extends screen {
     page.tax.textContent = `${p.tax} %`;
 
     page.strength.textContent = 0;
+    this.display_ships();
+  }
+
+  select_orbit(ev) { this.select_area('orbit'); }
+  select_surface(ev) { this.select_area('surface'); }
+  select_bays(ev) { this.select_area('bays'); }
+  select_area(area) {
+    this.selected_area = area;
+    this.display_ships();
+  }
+  display_ships() {
+    const ships = this.current_planet[this.selected_area].filter(x => x).slice(0, 6);
+    const boxes = document.getElementById('econships').children;
+    document.getElementById('arealabel').textContent = `SHIPS IN ${this.selected_area}`;
+    for (let i = 0; i < 6; ++i) {
+      if (ships.length > 0)
+        boxes[i].textContent = ships.shift().name;
+      else
+        boxes[i].textContent = 'EMPTY';
+    }
   }
 
   static fields = [{
@@ -195,6 +240,7 @@ class economy_screen extends screen {
 class ships_screen extends screen {
   constructor(game) {
     super()
+    this.game = game;
     this.current_ship = null;
     this.ship_list = [];
     const table = document.querySelector('#ships .shiptable');
@@ -204,6 +250,7 @@ class ships_screen extends screen {
       this.onclick(b, this.select_ship_cell);
       table.appendChild(b);
     }
+    
     let bays = document.querySelector('#ships .bays').children;
     for (let i = 0; i < 3; ++i) {
       const bay = bays[2*i+1];
@@ -228,15 +275,26 @@ class ships_screen extends screen {
       }
       ships.display();
     }
+    console.log(this.game.consistency_check());
   }
   send_ship(ev) {}
-  dock_ship(ev) {}
+
+  dock_ship(ev) {
+    const ship = this.current_ship;
+    if (ship?.state == Core.ShipState.orbit) {
+      const result = ship.location?.dock_ship(ship);
+      if (result.is_error) {
+        this.ship_message = new temp_message(result.text, 160);
+      }
+      ships.display();
+    }
+  }
 
   select_ship_bay(ev) {
     const i = ev.target.dataset.bay_n;
     const ship = this.ship_bays[i];
     if (ship) {
-      ws.current_ship = ship;
+      this.current_ship = ship;
       this.display();
     }
   }
@@ -283,11 +341,8 @@ class ships_screen extends screen {
         state_box.textContent = this.ship_message?.string || this.ship_state_message(ship);
         document.querySelector('#ships .planet span').textContent = planet.name;
         this.ship_bays = Array.from(planet.bays);
-        const bays = document.querySelector('#ships .bays').children;
-        for (let i = 0; i < 3; ++i) {
-          const sb = planet.bays[i]?.name;
-          bays[i*2+1].textContent = sb || '';
-        }
+        display_bays(document.querySelector('#ships .bays').children,
+                     planet.bays);
         const info = document.querySelector('#ships .info');
         info.querySelector('.shipname').textContent = ship.name;
         info.querySelector('.shipcrew').textContent = ship.crew;
@@ -347,7 +402,7 @@ class buy_ship_screen extends screen {
   prev_ship_type(ev) {
     const t = ws.ship_types.indexOf(this.current_ship_type);
     const n = (t == 0)?(ws.ship_types.length - 1):(t-1);
-    ws.current_ship_type = ws.ship_types[n];
+    this.current_ship_type = ws.ship_types[n];
     this.display();
   }
 
@@ -368,4 +423,184 @@ class buy_ship_screen extends screen {
   }
 }
 
+/* Docking bay screen */
+
+class docking_screen extends screen {
+  constructor(game) {
+    super(game);
+    this.game = game;
+    this.current_planet = game.starbase;
+
+    const bays = document.querySelector('#docking .bays').children;
+    for (let i = 0; i < 3; ++i) {
+      const bay = bays[2*i+1];
+      bay.dataset.bay_n = i;
+      this.onclick(bay, this.select_ship_bay);
+    }
+    const ship_things = document.querySelector('#docking .ship');
+    const passenger_block = ship_things.children[1];
+    const fuel_block = ship_things.children[2];
+    const other_block = ship_things.children[3];
+    this.inputs = {
+      type: ship_things.children[0],
+      passengers: passenger_block.querySelector('div'),
+      fuel: fuel_block.querySelector('div')
+    };
+    const buttons = ship_things.querySelectorAll('button');
+    this.onclick(buttons[0], this.load_passenger);
+    this.onclick(buttons[1], this.unload_passenger);
+    this.onclick(buttons[2], this.load_fuel);
+    this.onclick(buttons[3], this.unload_fuel);
+    this.onclick(buttons[4], this.add_crew);
+    this.onclick(buttons[5], this.unload_cargo);
+    this.onclick(buttons[6], this.scrap);
+  }
+
+  display() {
+    document.querySelector('#docking .planet span').textContent =
+      this.current_planet?.name || '';
+    this.ship_bays = this.current_planet?.bays || [];
+    display_bays(document.querySelector('#docking .bays').children,
+                 this.ship_bays);
+    const real_ships = this.ship_bays.filter(x => x);
+    if ((!this.current_ship) && (real_ships.length == 1))
+      this.current_ship = real_ships[0];
+    let data = [];
+    if (this.current_ship?.state == Core.ShipState.docked)
+      data = [
+        this.current_ship.name,
+        this.current_planet.pop,
+        this.current_ship.type.seats,
+        this.current_ship.type.crew,
+        this.current_ship.type.capacity,
+        this.current_ship.type.tank,
+        this.current_ship.total_cargo,
+        this.current_ship.cash_value,
+      ];
+    const view = document.querySelector('#docking .buyinfo').children;
+    for (let i = 0; i < data.length; ++i)
+      view[i*2].textContent = data[i] || '';
+    if (this.current_ship) {
+      this.inputs.type.textContent = this.current_ship.type.key;
+      this.inputs.passengers.textContent = this.current_ship.cargo.passengers;
+      this.inputs.fuel.textContent = this.current_ship.fuel;
+    } else {
+      this.inputs.type.textContent = '';
+      this.inputs.passengers.textContent = '';
+      this.inputs.fuel.textContent = '';
+    }
+  }
+
+  select_ship_bay(ev) {
+    const i = ev.target.dataset.bay_n;
+    const ship = this.ship_bays[i];
+    if (ship) {
+      this.current_ship = ship;
+      this.display();
+    }
+  }
+
+  load_passenger(ev) {}
+  unload_passenger(ev) {}
+  load_fuel(ev) {
+    if (this.current_ship?.state == Core.ShipState.docked) {
+      const result = this.current_ship.location.fuel_ship(this.current_ship, 5);
+      if (result.is_error)
+        this.message(result.text);
+    }
+  }
+  unload_fuel(ev) {
+    if (this.current_ship?.state == Core.ShipState.docked) {
+      const result = this.current_ship.location.fuel_ship(this.current_ship, 5);
+      if (result.is_error)
+        this.message(result.text);
+    }
+  }
+  add_crew(ev) {
+    if (this.current_ship?.state == Core.ShipState.docked) {
+      const result = this.current_ship.add_crew();
+      if (result.is_error)
+        this.message(result.text);
+    }
+  }
+  unload_cargo(ev) {}
+  scrap(ev) {}
+  message(msg) {
+    if (msg)
+      document.querySelector('#docking .messages').textContent = msg;
+  }
+}
+
+/* Planet Surface screen */
+
+class surface_screen extends screen {
+  constructor(game) {
+    super(game);
+    this.game = game;
+    
+    const bays = document.querySelector('#surface .bays').children;
+    for (let i = 0; i < 3; ++i) {
+      const bay = bays[2*i+1];
+      bay.dataset.bay_n = i;
+      this.onclick(bay, this.deploy)
+    }
+    this.slots = Array.from(document.querySelector('#surface .slots').children);
+    for (let i = 0; i < 6; ++i) {
+      const slot = this.slots[i];
+      slot.children[0].dataset.n = i;
+      this.onclick(slot.children[0], this.toggle);
+      slot.children[1].dataset.n = i;
+      this.onclick(slot.children[1], this.undeploy);
+    }
+    this.messagebox = document.querySelector('#surface div.message');
+    this.current_planet = this.game.starbase;
+  }
+  display() {
+    document.querySelector('#surface .planet span').textContent =
+      this.current_planet?.name || '';
+    this.bays = this.current_planet?.bays || [];
+    display_bays(document.querySelector('#surface .bays').children,
+                 this.bays);
+    this.ships = this.current_planet.surface.filter(x => x);
+    for (let i = 0; i < 6; ++i) {
+      const slot = this.slots[i];
+      if (this.ships[i]) {
+        slot.children[1].textContent = this.ships[i].type.name;
+        slot.children[2].textContent = this.ships[i].name;
+        slot.children[3].textContent = this.ships[i].active?'RUNNING':'';
+      } else {
+        slot.children[1].textContent = '';
+        slot.children[2].textContent = '';
+        slot.children[3].textContent = '';
+      }
+    }
+  }
+  toggle(ev) {
+    const s = this.ships[ev.target.dataset.n];
+    if (s) {
+      const result = s.active?s.deactivate():s.activate();
+      if (result.is_error) this.message(result.text);
+      this.display();
+    }
+  }
+  deploy(ev) {
+    const ship = this.bays[ev.target.dataset.bay_n];
+    if (ship) {
+      const result = this.current_planet.land(ship);
+      if (result.is_error) this.message(result.text);
+      this.display();
+    }
+  }
+  undeploy(ev) {
+    const ship = this.ships[ev.target.dataset.n];
+    if (ship) {
+      const result = this.current_planet.dock_ship(ship);
+      if (result.is_error) this.message(result.text);
+      this.display();
+    }
+  }
+  message(msg) {
+    this.messagebox.textContent = msg;
+  }
+}
 window.init = init;

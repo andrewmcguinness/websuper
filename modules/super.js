@@ -16,6 +16,7 @@ export class Super {
     this.planets = planets;
     this.ships = Array(24).fill(null);
     this.ship_counts = {};
+    this.messages = new Message_buffer(200);
     this.tick_i = 0;
   }
   planet(n) { return this.planets[n]; }
@@ -49,6 +50,7 @@ export class Super {
       return this.enemy_formatter();
     if (i == 255)
       ++this.date;
+    return tick_i + 256 * this.date;
   }
 
   tick_all() {
@@ -91,7 +93,7 @@ export class Super {
     return this.#add_ship(s, this.starbase);
   };
 
-  transferCash() {
+  transfer_cash() {
     for (let p of this.planets) {
       if ((p.state == Core.States.player) && (p != this.starbase)) {
         const cash = p.credits;
@@ -99,6 +101,7 @@ export class Super {
         this.starbase.add_resource('credits', got);
       }
     }
+    this.messages.put('All cash transferred!');
   }
   
   #add_ship(ship, planet) {
@@ -164,3 +167,38 @@ export class Super {
   attack() {}
   enemy_formatter() {}
 };
+
+class Message_buffer {
+  constructor(size) {
+    this.max = size;
+    this.start = 0;
+    this.data = [];
+  }
+  cursor() {
+    const buf = this;
+    return {
+      n: 0,
+      get() {
+        const m = buf.get(this.n);
+        if (m) ++this.n;
+        return m;
+      }
+    };
+  }
+  has(n) {
+    return ((n >= this.start) && (n < (this.start + this.data.length)));
+  }
+  get(n) {
+    if (n < this.start) return null;
+    if (n > this.start + this.data.length) return null;
+    return this.data[n - this.start];
+  }
+  put(msg) {
+    if (this.data.length >= this.max) {
+      const drop = (this.data.length / 2).toFixed(0);
+      this.start += drop;
+      this.data.splice(0, drop);
+    }
+    this.data.push(msg);
+  }
+}
