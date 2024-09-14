@@ -32,9 +32,9 @@ class Coreclass {
   }};
 
   States = Object.freeze({
-    barren: 'unformatted',
-    formatting: 'formatting',
-    player: 'players',
+    barren: 'UNFORMATTED',
+    formatting: 'FORMATTING',
+    player: 'YOUR STAR',
     enemy: 'enemy'
   });
 

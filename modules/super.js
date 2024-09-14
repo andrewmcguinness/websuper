@@ -15,13 +15,45 @@ export class Super {
     planets.push(this.starbase);
     this.planets = planets;
     this.ships = Array(24).fill(null);
+    this.ship_counts = {};
+    this.tick_i = 0;
   }
   planet(n) { return this.planets[n]; }
   get year() { return 2010 + floor(this.date / 64); }
   get day()  { return 1 + (this.date % 64); }
+  get datestr() { return '' + this.day + '/' + this.year; }
   tick() {
-    this.planets.forEach(x => x.tick(this.date));
+    const tick = this.tick_i;
+    this.tick_i = (tick + 1) % 256;
+    let i = tick;
+    if (i < this.ships.length)
+      return this.ships[i]?.tick(this.date);
+    i -= 32;
+    if (i < 24)
+      return; // platoons
+    i -= 24;
+    if (i < this.planets.length)
+      return this.planets[i].tick(this.date);
+    i -= this.planets.length;
+    if (i < this.planets.length)
+      return; // combat;
+    i -= this.planets.length;
+    if (i < 86)
+      return; // s-code
+    i = tick;
+    if (i == 169)
+      return this.reinforce_enemybase();
+    if (i == 251)
+      return this.attack();
+    if (i == 254)
+      return this.enemy_formatter();
+    if (i == 255)
+      ++this.date;
+  }
+
+  tick_all() {
     this.ships.forEach(x => { if (x) x.tick(); });
+    this.planets.forEach(x => x.tick(this.date));
     ++this.date;
   };
 
@@ -30,6 +62,11 @@ export class Super {
     return (ship_i >= 0);
   };
 
+  suggested_name(ship_type) {
+    const n = (this.ship_counts[ship_type.key] || 0) + 1;
+    this.ship_counts[ship_type.key] = n;
+    return ship_type.key + `-${n}`;
+  }
   buy_ship(ship_type, name) {
     if (!this.has_free_ship_slot) {
       return Core.error("You cannot have more ships");
@@ -50,11 +87,21 @@ export class Super {
       this.starbase.try_take_resource("credits", ship_type.credits),
       this.starbase.try_take_resource("minerals", ship_type.minerals),
       this.starbase.try_take_resource("energy", ship_type.energy));
-    const s = new ship_type.create(name);
-    return this.add_ship(s, this.starbase);
+    const s = new ship_type.create(name, ship_type);
+    return this.#add_ship(s, this.starbase);
   };
 
-  add_ship(ship, planet) {
+  transferCash() {
+    for (let p of this.planets) {
+      if ((p.state == Core.States.player) && (p != this.starbase)) {
+        const cash = p.credits;
+        const got = p.take_resource('credits', cash);
+        this.starbase.add_resource('credits', got);
+      }
+    }
+  }
+  
+  #add_ship(ship, planet) {
     const ship_i = this.ships.indexOf(null);
     if (planet.bay_free && (ship_i >= 0)) {
       this.ships[ship_i] = ship;
@@ -113,4 +160,7 @@ export class Super {
     return Log.n;
   };
           
+  reinforce_enemybase() {}
+  attack() {}
+  enemy_formatter() {}
 };

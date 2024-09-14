@@ -1,0 +1,138 @@
+<!DOCTYPE HTML>
+<html lang="en">
+  <head>
+    <script type='module' src='interface2.js'></script>
+    <link rel='stylesheet' type='text/css' href='stylesheet.css' title='Style'>
+  </head>
+  <body>
+    <button type='button' onclick='init()'>New game</button>
+    <hr/>
+    <div id='economy'>
+      <div id='planet'>
+        <div class='displayblock'>
+          <div id='rename' class='bigclick'><button type='button'><img src='imgs/rename' alt='rename'></button></div>
+          <div id='cashme' class='bigclick'><button type='button'><img src='imgs/cashme' alt='transfer'></button></div>
+        </div>
+      </div>
+      <div id='lower'>
+        <div>
+          <div class='message'>
+            welcome
+          </div>
+          <div class='seq'>
+            <div id='nav'>
+              <button type='button'>Battle</button>
+              <button type='button'>Ships</button>
+              <button type='button'>Cargo Bays</button>
+            </div>
+            <div id='planets'>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div id='areas'>
+            <button type='button'>ORBIT</button>
+            <button type='button'>SURFACE</button>
+            <button type='button'>BAYS</button>
+          </div>
+          <div id='arealabel'>SHIPS IN ORBIT</div>
+          <div id='econships'>
+            <div>EMPTY</div>
+            <div>EMPTY</div>
+            <div>EMPTY</div>
+            <div>EMPTY</div>
+            <div>EMPTY</div>
+            <div>EMPTY</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <hr/>
+    <div id='ships'>
+      <div class='top'>
+        <div class='left'>
+          <div class='planet'>
+            PLANET: <span></span>
+          </div>
+          <div class='bays'>
+            <div>1</div><div></div>
+            <div>2</div><div></div>
+            <div>3</div><div></div>
+          </div>
+        </div>
+        <div class='middle'>
+          <div class='moves'>
+            <button type='button'>Launch</button>
+            <button type='button'>Travel</button>
+            <button type='button'>Dock</button>            
+          </div>
+          <div class='info'>
+            <div class='r'>SHIP</div> <div class='shipname'></div>
+            <div class='shipcrew'></div><div>CREW</div>
+            <div class='r'>DATE</div> <div class='date'></div>
+            <div class='shipfuel'></div><div>FUEL</div>
+            <div class='r'>CLASS</div><div class='shiptype'></div><div>CLASS</div>
+          </div>
+        </div>
+        <div class='right'>
+          <button type='button'>Cancel</button>
+          <button type='button'>Rename</button>
+        </div>
+      </div>
+      <div class='shipstate'>
+      </div>
+      <div class='bottom'>
+        <div class='nav'>
+            <button type='button'>Battle</button>
+            <button type='button'>Buy</button>
+            <button type='button'>Cargo Bays</button>
+        </div>
+        <div class='shiptable'>
+        </div>
+        <div class='nav'>
+            <button type='button'>Surface</button>
+            <button type='button'>Economy</button>
+            <button type='button'>Army</button>
+        </div>
+      </div>
+    </div>
+    <hr/>
+    <div id='buy'>
+      <div class='nav'>
+        <button type='button'>Prev</button>
+        <button type='button'>BUY</button>
+        <div>
+          <div class='buydescription'></div>
+          <div class='buytype'></div>
+        </div>
+        <button type='button'>Next</button>
+      </div>
+      <div class='info'>
+        <div>STARBASE</div>
+        <div class='buyinfo'>
+          <div></div><div>:CREDITS</div>
+          <div></div><div>:MINERALS</div>
+          <div></div><div>:ENERGY</div>
+        </div>
+        <div>COST</div>
+        <div class='buyinfo'>
+          <div></div><div>:CREDITS</div>
+          <div></div><div>:MINERALS</div>
+          <div></div><div>:ENERGY</div>
+        </div>
+        <div>CAPACITY</div>
+        <div class='buyinfo'>
+          <div></div><div>:CREW</div>
+          <div></div><div>:PAYLOAD</div>
+          <div></div><div>:FUEL</div>
+        </div>
+        <div>DATA</div>
+        <div class='buyinfo'>
+          <div></div><div>:YOU HAVE</div>
+          <div></div><div>:RANGE</div>
+          <div></div><div>:SEATS</div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

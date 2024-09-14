@@ -18,10 +18,10 @@ Deno.test("format", () => {
   const p = game.planet(29);
   atm.send(p);
   assertEquals(p.state, States.barren);
-  game.tick(); game.tick();
+  game.tick_all(); game.tick_all();
   assertEquals(p.state, States.formatting);
   let fail = 200;
-  while((p.state != States.player) && (--fail > 0)) game.tick();
+  while((p.state != States.player) && (--fail > 0)) game.tick_all();
   assertEquals(game.year, 2010);
   assertEquals(game.day, 36);
 });
@@ -35,12 +35,12 @@ Deno.test("energy", () => {
   const sol = game.buy_ship(ShipTypeData.solar, 'TEST');
   assertEquals(sb.energy, 2908);
   Core.check(sol.launch());
-  game.tick();
+  game.tick_all();
   assertEquals(sb.energy, 2914);
-  game.tick();
+  game.tick_all();
   assertEquals(sb.energy, 2920);
   sb.dock_ship(sol);
-  game.tick();
+  game.tick_all();
   assertEquals(sb.energy, 2920);
   game.consistency_check();
 });
@@ -54,12 +54,12 @@ Deno.test("energy2", () => {
   const sol2 = game.buy_ship(ShipTypeData.solar, 'TEST2');
   assertEquals(sb.energy, 2816);
   Core.check(sol1.launch(), sol2.launch());
-  game.tick();
+  game.tick_all();
   assertEquals(sb.energy, 2828);
-  game.tick();
+  game.tick_all();
   assertEquals(sb.energy, 2840);
   Core.check(sb.dock_ship(sol1));
-  game.tick();
+  game.tick_all();
   assertEquals(sb.energy, 2846);
 });
 
@@ -71,14 +71,14 @@ Deno.test("food", () => {
   const it = game.buy_ship(ShipTypeData.farming, 'TEST');
   Core.check(sb.land(it));
   assertEquals(it.state, ShipState.landed);
-  game.tick();
+  game.tick_all();
   assertEquals(sb.food, 2243);
   assertEquals(sb.energy, 2030);
   it.active = true;
-  game.tick();
+  game.tick_all();
   assertEquals(sb.food, 2248);
   assertEquals(sb.energy, 2029);
-  game.tick();
+  game.tick_all();
   assertEquals(sb.food, 2253);
   assertEquals(sb.energy, 2028);
 });
@@ -89,17 +89,17 @@ Deno.test("travel", () => {
   const atm = game.buy_ship(ShipTypeData.atmos, 'ATMOS1');
   const p = game.planet(game.starbase.n - 1);
   atm.send(p);
-  for (let i = 0; i < 16; ++i) game.tick();
+  for (let i = 0; i < 16; ++i) game.tick_all();
   assertEquals(p.state, States.player);
   const frm = game.buy_ship(ShipTypeData.farming, 'FARM1');
   assertFalse(frm.is_error);
-  Core.check(frm.add_fuel(200));
+  Core.check(game.starbase.fuel_ship(frm, 200));
   assert(frm.launch().is_error);
   assertEquals(frm.location, game.starbase);
   Core.check(frm.add_crew(),
              frm.launch(),
              frm.send(p));
-  game.tick();
+  game.tick_all();
   Core.check(p.dock_ship(frm),
              p.land(frm));
   assertEquals(game.consistency_check(), 0);

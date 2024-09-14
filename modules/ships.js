@@ -76,14 +76,16 @@ class Ship {
     else return Core.error('Not in bay');
   };
 
-  add_fuel(amount) {
-    if (this.state == ShipState.docked) {
-      const room = this.type.tank - this.fuel;
-      const want = Math.min(amount, room);
-      const got = this.location.take_resource('fuel', want);
-      this.fuel += got;
-      return got;
-    } else return Core.error('Not in dock');
+  get fuel_space() {
+    return this.type.tank - this.fuel;
+  };
+
+  add_fuel(quantity) {
+    if (this.state != ShipState.docked)
+      return Core.error('Not in dock');
+    this.fuel += quantity;
+    if (this.fuel > this.tank) this.fuel = this.tank;
+    return quantity;
   };
 
   add_crew() {
@@ -97,6 +99,20 @@ class Ship {
       else return Core.error('Not enough population', { want: want, have: this.location.pop });
     }
     else return Core.error('Not in dock');
+  }
+
+  get cargo_space() {
+    return this.type.capacity - (this.cargo.food +
+                                 this.cargo.fuel +
+                                 this.cargo.minerals +
+                                 this.cargo.energy);
+  }
+
+  add_cargo(resource, amount) {
+    if (this.state == ShipState.docked) {
+      this[resource] += amount;
+      return amount;
+    } else return Core.error('Not in dock');
   }
 
   dock(planet) {
@@ -125,6 +141,8 @@ class Ship {
     }
     return false;
   }
+
+  tick() { this.move(); }
 }
 
 class Farming extends Ship {
@@ -223,7 +241,7 @@ class TypeDataItem {
     
 export const ShipTypeData = Object.fromEntries([
   new TypeDataItem("atmos", "Atmosphere Processor",
-                   "",
+                   "Generates new living planets from lifeless ones",
                    26753, 75, 999, 0,   0, 0, 0, 0, Atmos),
   new TypeDataItem("solar", "Solar Sat Generator",
                    "Transmits solar energy back to planet from orbit",

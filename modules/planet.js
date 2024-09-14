@@ -16,6 +16,7 @@ export class Planet {
     this.state = States.barren;
     this.flags = flags;
     this.orbit = [];
+    this.growth = 0;
   }
 
   static resource = [ "food", "minerals", "fuel", "energy",
@@ -64,8 +65,33 @@ export class Planet {
     throw('bad resource ' + r);
   }
 
+  load_ship(ship, resource, quantity) {
+    if (ship.location != this)
+      return Core.error('ship not at planet');
+    if (ship.state != Core.ShipState.docked)
+      return Core.error('ship not docked');
+    if (!quantity in Planet.resource)
+      return Core.error('bad resource');
+    const want = Math.min(quantity, ship.cargo_space);
+    const got = this.take_resource(resource, quantity);
+    return ship.add_cargo(resource, got);
+  }
+
+  fuel_ship(ship, quantity) {
+    if (ship.location != this)
+      return Core.error('ship not at planet');
+    if (ship.state != Core.ShipState.docked)
+      return Core.error('ship not docked');
+
+    const room = ship.fuel_space;
+    const want = Math.min(quantity, room);
+    const got = this.take_resource('fuel', want);
+    return ship.add_fuel(got);
+  }
+
   static starbase(flags) {
     const s = new Planet(31, flags);
+    s.name = 'STARBASE';
     s.type = Types.urban;
     s.state = States.player;
     s.pop = Core.random(1500, 2000);
@@ -150,6 +176,7 @@ export class Planet {
 
   tick(day) {
     if (this.state == States.player) {
+      this.food_yesterday = this.food;
       const eat = floor(this.pop / 240);
       if (eat > this.food) this.hunger = true;
       if (eat < this.food) this.hunger = false;
@@ -162,7 +189,7 @@ export class Planet {
 
       const mc = this.tax + this.morale - 100;
       if (mc > 0) --this.morale;
-      if (mc < 0) ++this.morale;
+      if ((mc < 0) && !this.hunger) ++this.morale;
 
       if ((day % 2) == 1) {
         const mm = this.flags.drug?2:3;
@@ -174,7 +201,7 @@ export class Planet {
             if (this.pop > 30000) this.pop = 30000;
           }
         } else if (this.growth < 0) {
-          this.pop -= floor(-this.growth * this.pop / 400);
+          this.pop -= floor(-this.growth * this.pop / 400) + 1;
           if (this.pop < 0) this.pop = 0;
         }
       } else {

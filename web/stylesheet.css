@@ -1,0 +1,190 @@
+body > div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+#planet {
+    height: 15em;
+    column-count: 3;
+}
+#planet > div {
+    display: flex;
+    flex-direction: column;
+    padding-bottom: 1ex;
+    break-inside: avoid;
+}
+#lower {
+    display: flex;
+}
+#lower > div {
+    display: flex;
+    flex-direction: column;
+}
+#nav {
+    display: flex;
+    flex-direction: column;
+}
+#areas {
+    display: flex;
+    justify-content: space-between;
+}
+#econships {
+    display: grid;
+    grid-template-columns: 80px 80px 80px;
+}
+.bigclick {
+    height: 4em;
+}
+#planets {
+    display: block;
+    column-count: 4;
+}
+div.seq {
+    display: flex;
+}
+#planets div {
+    display: block;
+    width: 10em;
+    height: 1.5em;
+    font-size: small;
+    font-weight: bold;
+    background-color: black;
+    color: white;
+    padding: 1px;
+}
+.player {
+    border-bottom: 2px solid green;
+    border-right: 2px solid green;
+}
+.enemy {
+    border-bottom: 2px solid red;
+    border-right: 2px solid red;
+}
+.blank {
+    border-bottom: 2px solid white;
+    border-right: 2px solid white;
+}
+input {
+    text-align: right;
+    width: 8em;
+}
+.displayblock > div {
+    width: 16em;
+    overflow-x: clip;
+    display: flex;
+}
+.displayblock > div > div {
+    display: inline-block;
+    overflow-x: clip;
+}
+.displayblock > div > div:nth-of-type(1) {
+    width: 8em;
+    text-align: right;
+    margin-right: 1ex;
+    flex-shrink: 0;
+    font-size: small;
+    font-family: sans-serif;
+    font-weight: bold;
+    background-color: black;
+    color: white;
+    padding: 3px 1ex;
+    border: 1px solid white;
+}
+label {
+    width: 8em;
+}
+#ships .top {
+    display: flex;
+}
+#ships .top .left {
+    display: flex;
+    flex-direction: column;
+}
+#ships .bays {
+    display: grid;
+    grid-template-columns: 1fr 4fr;
+    row-gap: 2px;
+}
+#ships .bays div:nth-of-type(even) {
+    display: block;
+    width: 10em;
+    height: 1.5em;
+    font-size: small;
+    font-weight: bold;
+    background-color: black;
+    color: white;
+    padding: 1px;
+    border: 2px solid green;
+}
+#ships .middle {
+    display: flex;
+    flex-direction: column;
+}
+#ships .middle .moves {
+    display: flex;
+}
+#ships .middle .info {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
+    column-gap: 1ex;
+}
+#ships .info .shiptype {
+    grid-column: span 2;
+}
+#ships .info .shipcrew,.shipfuel,.r {
+    text-align: right;
+}
+#ships .right {
+    display: flex;
+    flex-direction: column;
+}
+#ships > div {
+    display: flex;
+}
+#ships .nav {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+}
+#ships .shiptable {
+    display: block;
+    column-count: 4;
+}
+#ships .shiptable > div {
+    display: block;
+    width: 10em;
+    height: 1.5em;
+    font-size: small;
+    font-weight: bold;
+    background-color: black;
+    color: white;
+    padding: 1px;
+    border-bottom: 2px solid purple;
+    border-right: 2px solid purple;
+}
+#buy > div.nav {
+    display: flex;
+}
+#buy > div.info {
+    display: block;
+    column-count: 4;
+}
+#buy > div.nav > div {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    align-items: center;
+    padding: 2px 2em;
+}
+div.info {
+    text-align: center;
+}
+div.buyinfo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    text-align: left;
+}
+div.buyinfo > div:nth-of-type(odd) {
+    text-align: right;
+    margin-right: 1ex;
+}
