@@ -17,12 +17,23 @@ export class Planet {
     this.flags = flags;
     this.orbit = [];
     this.growth = 0;
+    this.listeners = [];
   }
-
+  add_listener(f) {
+    this.listeners.push(f);
+  }
+  notify(obj) {
+    this.listeners.forEach(f => f(obj));
+  }
+  
   get food_delta() {
     if (this.food_yesterday != null)
       return this.food_today - this.food_yesterday;
     else return 0;
+  }
+
+  get formatted() {
+    return ((this.state == States.player) || (this.state == States.enemy));
   }
   static resource = [ "food", "minerals", "fuel", "energy",
                       "pop", "credits" ];
@@ -136,10 +147,10 @@ export class Planet {
     this.platoons = [];
   }
 
-  formatDone() {
+  formatDone(name) {
     if (this.state == States.formatting) {
       this.type = Core.randomChoice(Types);
-      this.name = this.format.name;
+      this.name = name;
       this.minerals = 20;
       this.energy = 35;
       this.fuel = 150;
@@ -152,6 +163,7 @@ export class Planet {
       this.hunger = false;
       this.state = States.player;
       this.format = null;
+      this.notify({planet: this, change: 'formatted'});
     }
   }
 

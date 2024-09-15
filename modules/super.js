@@ -11,11 +11,13 @@ export class Super {
     const planets = [];
     this.date = 0;
     for (let i = 0; i < 31; ++i) planets.push(new Planet(i, this.flags));
+    planets.forEach(p => p.add_listener(x => this.receive(x)));
     this.starbase = Planet.starbase(this.flags);
     planets.push(this.starbase);
     this.planets = planets;
     this.ships = Array(24).fill(null);
     this.ship_counts = {};
+    this.planet_count = 0;
     this.messages = new Message_buffer(200);
     this.tick_i = 0;
   }
@@ -59,14 +61,24 @@ export class Super {
     ++this.date;
   };
 
+  receive(obj) {
+    if (obj.planet)
+      if (obj.change == 'formatted')
+        ++this.planet_count;
+  }
+
   get has_free_ship_slot() {
     const ship_i = this.ships.indexOf(null);
     return (ship_i >= 0);
   };
 
+  suggested_planet_name() {
+    return `planet-${this.planet_count + 1}`;
+  }
   suggested_name(ship_type) {
-    const n = (this.ship_counts[ship_type.key] || 0) + 1;
-    this.ship_counts[ship_type.key] = n;
+    if (!(ship_type.key in this.ship_counts))
+      this.ship_counts[ship_type.key] = 0;
+    const n = this.ship_counts[ship_type.key] + 1;
     return ship_type.key + `-${n}`;
   }
   buy_ship(ship_type, name) {
@@ -85,11 +97,16 @@ export class Super {
     if (ship_type.energy > this.starbase.energy) {
       return Core.error("Not enough energy");
     }
+    if (ship_type.unique &&
+        this.ships.some(x => (x.type == ship_type))) {
+      return Core.error("You can only have one");
+    }
     Core.check(
       this.starbase.try_take_resource("credits", ship_type.credits),
       this.starbase.try_take_resource("minerals", ship_type.minerals),
       this.starbase.try_take_resource("energy", ship_type.energy));
     const s = new ship_type.create(name, ship_type);
+    ++this.ship_counts[ship_type.key];
     return this.#add_ship(s, this.starbase);
   };
 

@@ -104,6 +104,7 @@ class Ship {
   add_crew() {
     if (this.state == ShipState.docked) {
       const want = this.type.crew - this.crew;
+      if (want == 0) return Core.error('Ship already has crew!');
       const got = this.location.try_take_resource('pop', want);
       if (want == got) {
         this.crew += want;
@@ -248,7 +249,7 @@ class Atmos extends Ship {
     }
     else if (this.state == ShipState.formatting) {
       if (--this.format_days == 0) {
-        this.location.formatDone();
+        this.location.formatDone(this.new_planet_name);
         this.state = ShipState.landed;
         Core.check(this.location.dock_ship(this),
                    this.location.land(this));
@@ -264,13 +265,15 @@ class Atmos extends Ship {
       if (index > -1) leaving[index] = null;
     });
   }
-  
-  send(planet) {
+
+  format_planet(planet, name) {
     super.send(planet);
     this.format_days = floor(planet.size / 250);
+    this.new_planet_name = name;
     return this;
   }
 
+  get unique() { return true; }
 };
 
 class TypeDataItem {
