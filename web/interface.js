@@ -69,6 +69,10 @@ class temp_message {
   }
 }
 
+function show(screen) {
+  document.getElementById(screen).classList.add('visible');
+}
+
 function display_bays(elements, ships) {
   const data = ships || [];
   for (let i = 0; i < 3; ++i) {
@@ -143,6 +147,7 @@ class economy_screen extends screen {
 
     this.inputs = map;
     this.food_direction = 0;
+    show('economy');
   }
 
   display(time) {
@@ -264,6 +269,7 @@ class ships_screen extends screen {
     this.onclick(buttons[2], this.dock_ship);
   
     this.display();
+    show('ships');
   }
 
   launch_ship(ev) {
@@ -366,6 +372,7 @@ class buy_ship_screen extends screen {
     for (let button of document.querySelectorAll('#buy .nav button')) {
       this.onclick(button, handlers.shift());
     }
+    show('buy');
   }
   
   display() {
@@ -454,6 +461,7 @@ class docking_screen extends screen {
     this.onclick(buttons[4], this.add_crew);
     this.onclick(buttons[5], this.unload_cargo);
     this.onclick(buttons[6], this.scrap);
+    show('docking');
   }
 
   display() {
@@ -554,7 +562,10 @@ class surface_screen extends screen {
     }
     this.messagebox = document.querySelector('#surface div.message');
     this.current_planet = this.game.starbase;
+    document.getElementById('docking').display
+    show('surface');
   }
+
   display() {
     document.querySelector('#surface .planet span').textContent =
       this.current_planet?.name || '';
@@ -565,7 +576,7 @@ class surface_screen extends screen {
     for (let i = 0; i < 6; ++i) {
       const slot = this.slots[i];
       if (this.ships[i]) {
-        slot.children[1].textContent = this.ships[i].type.name;
+        slot.children[1].textContent = this.ships[i].type.key;
         slot.children[2].textContent = this.ships[i].name;
         slot.children[3].textContent = this.ships[i].active?'RUNNING':'';
       } else {

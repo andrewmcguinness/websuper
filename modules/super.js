@@ -50,7 +50,7 @@ export class Super {
       return this.enemy_formatter();
     if (i == 255)
       ++this.date;
-    return tick_i + 256 * this.date;
+    return this.tick_i + 256 * this.date;
   }
 
   tick_all() {

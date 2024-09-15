@@ -1,4 +1,7 @@
 body > div {
+    display: none;
+}
+body > div.visible {
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -93,10 +96,11 @@ input {
 label {
     width: 8em;
 }
-#ships .top {
+.top {
     display: flex;
+    flex-direction: row;
 }
-.top > .left {
+.left {
     display: flex;
     flex-direction: column;
 }
@@ -195,10 +199,6 @@ div.buyinfo > div:nth-of-type(odd) {
     padding: 3px 1ex;
     border: 2px solid white;
 }
-div#docking > div {
-    display: flex;
-    flex-direction: column;
-}
 div#docking .ship div div {
    text-align: right;
     margin-right: 1ex;
@@ -212,15 +212,16 @@ div#docking .ship div div {
     padding: 3px 1ex;
     border: 2px solid white;
 }
-div#docking, div#docking .top {
-    display: flex;
-    flex-direction: row;
-}
-#docking div.ship {
+#docking div.ship, div.top {
     display: flex;
     flex-direction: row;
 }
 #docking div.ship div {
     display: grid;
     grid-template-columns: 1fr 1fr;
+}
+#surface div.slots {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
+    column-gap: 1ex;
 }

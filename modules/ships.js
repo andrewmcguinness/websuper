@@ -194,6 +194,32 @@ class Farming extends Ship {
   }
 }
 
+class Mining extends Ship {
+  constructor(name) {
+    super(name, ShipTypeData.mining);
+  }
+
+  tick() {
+    this.move();
+    if (this.state == ShipState.landed) {
+      if (this.active) {
+        const power = this.location.try_take_resource("energy", 1);
+        if (power == 1) {
+          const minerals = (this.location.flags.drill?9:2) +
+                ((this.location.type == Core.Types.volcano)?5:0);
+          this.location.add_resource("minerals", minerals);
+          const fuel = (this.location.flags.drill?32:7) +
+                ((this.location.type == Core.Types.volcano)?15:0);
+          this.location.add_resource("fuel", fuel);
+        } else {
+          this.active = false;
+          this.messages.add('Run out of energy on ' + this.location.name);
+        }
+      }
+    }
+  }
+}
+
 class Solar extends Ship {
   constructor(name) {
     super(name, ShipTypeData.solar);
@@ -277,7 +303,7 @@ export const ShipTypeData = Object.fromEntries([
                    5250, 95, 365, 21,   850, 600, 4500, 4, Ship),
   new TypeDataItem("mining", "Core Mining Station",
                    "Generates fuels & minerals when running on surface",
-                   17999, 600, 875, 294,   1400, 950, 0, 0, Ship),
+                   17999, 600, 875, 294,   1400, 950, 0, 0, Mining),
   new TypeDataItem("farming", "Horticultural Station",
                    "Generates food supplies when running on surface",
                    16995, 540, 970, 175,    750, 950, 0, 0, Farming),
