@@ -225,3 +225,13 @@ div#docking .ship div div {
     grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr;
     column-gap: 1ex;
 }
+.cargo {
+    display: grid;
+    grid-template-columns: 2fr 8fr 1fr;
+    align-items: center;
+    column-gap: 4px;
+}
+.cargo .label {
+    grid-row: span 2;
+    text-align: right;
+}

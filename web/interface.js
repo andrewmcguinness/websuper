@@ -718,6 +718,17 @@ class docking_screen extends screen {
       this.inputs.passengers.textContent = '';
       this.inputs.fuel.textContent = '';
     }
+
+    const commodities = [ 'food', 'minerals', 'fuel', 'energy' ];
+    const children = document.querySelector('#docking .cargo').children;
+    for (let i = 0; i < 4; ++i) {
+      const p = this.current_planet[commodities[i]],
+            s = this.current_ship?.cargo[commodities[i]] || 0;
+      children[i*5+1].value = p;
+      children[i*5+2].textContent = p;
+      children[i*5+3].value = s;
+      children[i*5+4].textContent = s;
+    }
   }
 
   select_ship_bay(ev) {
