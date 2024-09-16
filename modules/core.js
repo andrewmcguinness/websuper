@@ -49,7 +49,9 @@ class Coreclass {
     docked: 'docked',
     landed: 'landed',
     orbit: 'orbiting',
-    transit: 'transiting'
+    transit: 'transiting',
+    formatting: 'formatting',
+    destroyed: 'destroyed'
   });
 
   error(msg, params) { return new Error(msg, params); }

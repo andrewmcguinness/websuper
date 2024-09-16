@@ -48,7 +48,7 @@ class Ship {
   };
 
   send(planet) {
-    if (this.state != ShipState.landed) {
+    if (this.state == ShipState.orbit) {
       const distance = Math.abs(planet.n - this.location.n);
       const fuel_needed = distance*(Core.flags.valve?25:50);
       if (this.uses_fuel && (fuel_needed > this.fuel)) {
@@ -240,6 +240,7 @@ class Solar extends Ship {
 class Atmos extends Ship {
   constructor(name) {
     super(name, ShipTypeData.atmos);
+    this.format_days = 0; // not busy
   }
 
   tick() {
@@ -267,13 +268,28 @@ class Atmos extends Ship {
   }
 
   format_planet(planet, name) {
+    // Atmos can always leave if it is not busy,
+    // even if bays are full
+    if ((this.state == ShipState.landed) ||
+        (this.state == ShipState.docked)) {
+      this.leave();
+      this.state = ShipState.orbit;
+    }
     super.send(planet);
+    if (this.state != ShipState.transit) console.log('ERROR', this);
+
     this.format_days = floor(planet.size / 250);
     this.new_planet_name = name;
     return this;
   }
 
   get unique() { return true; }
+  get available() {
+    return ((this.state == ShipState.orbit) ||
+            (this.state == ShipState.docked) ||
+            (this.state == ShipState.landed)) &&
+      (!this.format_days);
+  }
 };
 
 class TypeDataItem {
