@@ -81,6 +81,18 @@ export class Planet {
     throw('bad resource ' + r);
   }
 
+  unload_ship(ship, resource, quantity) {
+    if (ship.location != this)
+      return Core.error('ship not at planet');
+    if (ship.state != Core.ShipState.docked)
+      return Core.error('ship not docked');
+    if (!quantity in Planet.resource)
+      return Core.error('bad resource');
+    const want = Math.min(quantity, 30000 - this[resource]);
+    const got = ship.take_cargo(resource, want);
+    return this.add_resource(resource, got);
+  }
+
   load_ship(ship, resource, quantity) {
     if (ship.location != this)
       return Core.error('ship not at planet');
@@ -89,7 +101,7 @@ export class Planet {
     if (!quantity in Planet.resource)
       return Core.error('bad resource');
     const want = Math.min(quantity, ship.cargo_space);
-    const got = this.take_resource(resource, quantity);
+    const got = this.take_resource(resource, want);
     return ship.add_cargo(resource, got);
   }
 

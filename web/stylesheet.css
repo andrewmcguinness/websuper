@@ -6,6 +6,9 @@ body > div.visible {
     flex-direction: column;
     align-items: center;
 }
+hr {
+    width: 100%
+}
 #planet {
     height: 15em;
     column-count: 3;
@@ -190,7 +193,7 @@ div.buyinfo > div:nth-of-type(odd) {
     text-align: right;
     margin-right: 1ex;
     display: block;
-    width: 10em;
+    width: 6em;
     height: 1.5em;
     font-size: small;
     font-weight: bold;

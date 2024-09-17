@@ -121,8 +121,16 @@ class Ship {
 
   add_cargo(resource, amount) {
     if (this.state == ShipState.docked) {
-      this[resource] += amount;
+      this.cargo[resource] += amount;
       return amount;
+    } else return Core.error('Not in dock');
+  }
+
+  take_cargo(resource, amount) {
+    if (this.state == ShipState.docked) {
+      const taken = Math.min(this.cargo[resource], amount);
+      this.cargo[resource] -= taken;
+      return taken;
     } else return Core.error('Not in dock');
   }
 
@@ -294,7 +302,7 @@ class Atmos extends Ship {
 
 class TypeDataItem {
   constructor(key, name, description, credits, minerals, energy, crew,
-              tank, capacity, seats, platoons, clazz) {
+              tank, capacity, seats, platoons, active_light, clazz) {
     this.key = key;
     this.name = name;
     this.description = description;
@@ -306,6 +314,7 @@ class TypeDataItem {
     this.capacity = capacity;
     this.seats = seats;
     this.platoons = platoons;
+    this.active_light = active_light;
     this.create = clazz;
   }
 }
@@ -313,20 +322,20 @@ class TypeDataItem {
 export const ShipTypeData = Object.fromEntries([
   new TypeDataItem("atmos", "Atmosphere Processor",
                    "Generates new living planets from lifeless ones",
-                   26753, 75, 999, 0,   0, 0, 0, 0, Atmos),
+                   26753, 75, 999, 0,   0, 0, 0, 0, false, Atmos),
   new TypeDataItem("solar", "Solar Sat Generator",
                    "Transmits solar energy back to planet from orbit",
-                   975, 7, 92, 0,   0, 0, 0, 0, Solar),
+                   975, 7, 92, 0,   0, 0, 0, 0, false, Solar),
   new TypeDataItem("battle", "B-29 Battle Cruiser",
                    "Carries four fully equipped platoons into battle",
-                   5250, 95, 365, 21,   850, 600, 4500, 4, Ship),
+                   5250, 95, 365, 21,   850, 600, 4500, 4, false, Ship),
   new TypeDataItem("mining", "Core Mining Station",
                    "Generates fuels & minerals when running on surface",
-                   17999, 600, 875, 294,   1400, 950, 0, 0, Mining),
+                   17999, 600, 875, 294,   1400, 950, 0, 0, true, Mining),
   new TypeDataItem("farming", "Horticultural Station",
                    "Generates food supplies when running on surface",
-                   16995, 540, 970, 175,    750, 950, 0, 0, Farming),
+                   16995, 540, 970, 175,    750, 950, 0, 0, true, Farming),
   new TypeDataItem("cargo", "Cargo Store / Carrier",
                    "Deep space heavy duty cargo / personnel carrier",
-                   15400, 125, 465, 11,    1250, 2250, 1850, 0, Ship)
+                   15400, 125, 465, 11,    1250, 2250, 1850, 0, false, Ship)
 ].map(i => [i.key, i]));
