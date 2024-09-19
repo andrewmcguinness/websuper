@@ -128,6 +128,29 @@ export class Planet {
     return ship.remove_fuel(got);
   }
 
+  embark_passengers(ship, quantity) {
+    if (ship.location != this)
+      return Core.error('ship not at planet');
+    if (ship.state != Core.ShipState.docked)
+      return Core.error('ship not docked');
+
+    const room = ship.passenger_space;
+    const want = Math.min(quantity, room);
+    const got = this.take_resource('pop', want);
+    return ship.add_cargo('passengers', got);
+  }
+
+  debark_passengers(ship, quantity) {
+    if (ship.location != this)
+      return Core.error('ship not at planet');
+    if (ship.state != Core.ShipState.docked)
+      return Core.error('ship not docked');
+
+    const want = Math.min(quantity, 30000 - this.pop);
+    const got = ship.take_cargo('passengers', want);
+    return this.add_resource('pop', got);
+  }
+
   static starbase(flags) {
     const s = new Planet(31, flags);
     s.name = 'STARBASE';

@@ -208,8 +208,10 @@ class main_screen extends screen {
     this.inputs.planet.textContent = this.current_planet.name || 'LIFELESS!';
   }
   planet_selected(p) {
-    if (p != this.current_planet)
+    if (p != this.current_planet) {
       this.current_planet = p;
+      this.planet_index = this.game.planets.indexOf(p);
+    }
   }
   planet_info() {}
   home() { this.current_planet = this.game.starbase; }
@@ -729,10 +731,12 @@ class docking_screen extends screen {
       response: document.querySelector('#docking .message'),
       cargo_gauges: cargo
     };
+    this.emptying = [];
     show('docking');
   }
 
   display() {
+    this.continue_unloading();
     this.inputs.planet.textContent = this.current_planet?.name || '';
     this.ship_bays = this.current_planet?.bays || [];
     display_bays(this.inputs.bays.children, this.ship_bays);
@@ -779,6 +783,28 @@ class docking_screen extends screen {
     }
   }
 
+  continue_unloading() {
+    this.emptying.forEach(e => {
+      if (!e.done) {
+        if ((e.ship.location == e.planet) &&
+            (e.ship.state == Core.ShipState.docked)) {
+          for (const r of [ "food", "minerals", "fuel", "energy" ]) {
+            if (e.ship.cargo[r] > 0) {
+              e.planet.unload_ship(e.ship, r, 5);
+              return;
+            }
+          }
+          if (e.ship.cargo.passengers) {
+            e.planet.debark_passengers(e.ship, 5);
+            return;
+          }
+        }
+        e.done = true;
+      }
+    });
+    this.emptying = this.emptying.filter(e => !e.done);
+  }
+
   select_ship_bay(ev) {
     const i = ev.target.dataset.bay_n;
     const ship = this.ship_bays[i];
@@ -794,8 +820,20 @@ class docking_screen extends screen {
       this.current_planet = p;
   }
 
-  load_passenger(ev) {}
-  unload_passenger(ev) {}
+  load_passenger(ev) {
+    if (this.current_ship?.state == Core.ShipState.docked) {
+      const result = this.current_ship.location.embark_passengers(this.current_ship, 1);
+      if (result.is_error)
+        this.respond(result.text);
+    }
+  }
+  unload_passenger(ev) {
+    if (this.current_ship?.state == Core.ShipState.docked) {
+      const result = this.current_ship.location.debark_passengers(this.current_ship, 1);
+      if (result.is_error)
+        this.respond(result.text);
+    }
+  }
   load_fuel(ev) {
     if (this.current_ship?.state == Core.ShipState.docked) {
       const result = this.current_ship.location.fuel_ship(this.current_ship, 1);
@@ -811,6 +849,12 @@ class docking_screen extends screen {
     }
   }
   unload_all_cargo() {
+    if (this.current_planet && this.current_ship) {
+      this.emptying.push({
+        planet: this.current_planet,
+        ship: this.current_ship
+      });
+    }
   }
   add_crew(ev) {
     if (this.current_ship?.state == Core.ShipState.docked) {

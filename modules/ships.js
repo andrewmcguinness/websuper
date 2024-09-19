@@ -88,6 +88,10 @@ class Ship {
     return this.type.tank - this.fuel;
   };
 
+  get passenger_space() {
+    return this.type.seats - this.cargo.passengers;
+  }
+
   add_fuel(quantity) {
     if (this.state != ShipState.docked)
       return Core.error('Not in dock');
