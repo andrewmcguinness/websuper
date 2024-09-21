@@ -15,7 +15,7 @@ export class Super {
     this.starbase = Planet.starbase(this.flags);
     planets.push(this.starbase);
     this.planets = planets;
-    this.ships = Array(24).fill(null);
+    this.ships = Array(32).fill(null);
     this.ship_counts = {};
     this.planet_count = 0;
     this.messages = new Message_buffer(200);
@@ -109,6 +109,21 @@ export class Super {
     ++this.ship_counts[ship_type.key];
     return this.#add_ship(s, this.starbase);
   };
+
+  scrap_ship(ship) {
+    if (ship.type) {
+      if (ship.state != Core.ShipState.docked)
+        return Core.error('Ships can only be scrapped in dock');
+      const planet = ship.location;
+      if (planet.state != Core.States.player)
+        return Core.error('Ship is not on your planet')
+      const result = planet.scrap_ship(ship);
+      if (result.is_error) return result;
+      
+      const ship_index = this.ships.indexOf(ship);
+      if (ship_index > -1) this.ships[ship_index] = null;
+    }
+  }
 
   transfer_cash() {
     for (let p of this.planets) {

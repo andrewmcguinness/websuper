@@ -151,6 +151,29 @@ export class Planet {
     return this.add_resource('pop', got);
   }
 
+  scrap_ship(ship) {
+    if (ship.location != this)
+      return Core.error('ship not at planet');
+    if (ship.state != Core.ShipState.docked)
+      return Core.error('ship not docked');
+
+    this.unfuel_ship(ship, ship.fuel);
+    this.debark_passengers(ship, ship.cargo.passengers);
+    
+    for (let r of ['food', 'minerals', 'fuel', 'energy'])
+      this.unload_ship(ship, r, ship.cargo[r]);
+    this.add_resource('credits', ship.cash_value);
+    this.add_resource('pop', ship.crew);
+    this.add_resource('minerals', ship.type.minerals);
+    this.add_resource('energy', ship.type.energy);
+
+    const bay_index = this.bays.indexOf(ship);
+    if (bay_index > -1) this.bays[bay_index] = null;
+
+    ship.type = null;
+    return ship;
+  }
+
   static starbase(flags) {
     const s = new Planet(31, flags);
     s.name = 'STARBASE';
@@ -263,7 +286,7 @@ export class Planet {
         this.growth = t1 - floor(this.tax / 4) - Math.floor((100 - this.morale)/4);
         if (this.growth > 0) {
           if (this.pop > 1) {
-            this.pop += floor(this.growth * this.pop / 400);
+            this.pop += floor(this.growth * this.pop / 400) + 1;
             if (this.pop > 30000) this.pop = 30000;
           }
         } else if (this.growth < 0) {

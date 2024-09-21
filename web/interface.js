@@ -152,6 +152,7 @@ class name_input {
   hide() {
     this.parent.removeChild(this.container);
   }
+  // todo validate name
   enter(ev) {
     if ((ev.type == 'keyup') && (ev.key != 'Enter')) return; // ignore
     this.handler(this.input.value || this.initial);
@@ -273,7 +274,7 @@ class economy_screen extends screen {
       div.addEventListener('click', ev => { this.select_planet(p); });
       map.planets.appendChild(div);
     }
-    this.onclick(document.getElementById('rename'), this.rename);
+    this.onclick(document.getElementById('rename'), this.ask_rename);
     this.onclick(document.getElementById('cashme'), this.transfer_cash);
     this.onclick(map.planet_ops[2], this.format_planet);
     const insert = map['tax'].nextElementSibling;
@@ -330,7 +331,7 @@ class economy_screen extends screen {
       page.pop.textContent = p.pop;
       page.growth.textContent = gr;
       page.morale.textContent = `${p.morale} %`;
-      page.tax.textContent = `${p.tax} %`;
+      this.write_tax();
 
       page.strength.textContent = 0;
       this.display_ships();
@@ -387,14 +388,17 @@ class economy_screen extends screen {
   reduce_tax() {
     if (this.current_planet.tax > 0)
       --this.current_planet.tax;
-    this.inputs.tax.textContent = this.current_planet.tax;
+    this.write_tax();
   }
   increase_tax() {
     if (this.current_planet.tax < 100)
       ++this.current_planet.tax;
-    this.inputs.tax.textContent = this.current_planet.tax;
+    this.write_tax();
   }
-  rename() {}
+  write_tax() {
+    const t = this.current_planet.tax;
+    this.inputs.tax.textContent = `${t} %`;
+  }
   transfer_cash() {
     this.game.transfer_cash();
   }
@@ -415,6 +419,16 @@ class economy_screen extends screen {
     return Core.error('Formatter is busy!');
   }
 
+  ask_rename() {
+    if (this.current_planet.state != Core.States.player)
+      return this.respond('not yours!');
+    this.name_input.show(this.current_planet.name);
+    this.formatting = {
+      planet: this.current_planet,
+      name: this.current_planet.name
+    };
+  }
+
   format_planet() {
     const formatter = this.formatter_available();
     if (formatter.is_error) return this.respond(formatter.text);
@@ -432,18 +446,29 @@ class economy_screen extends screen {
   new_planet_name(name) {
     const formatter = this.formatting.formatter;
     const planet = this.formatting.planet;
+    const old_name = this.formatting.name;
     this.formatting = null;
     this.name_input.hide();
-    if (!formatter.available) {
-      this.respond('Formatter no longer available!');
-      return;
+    if (formatter) {
+      // formatting a new planet
+      if (!formatter.available) {
+        this.respond('Formatter no longer available!');
+        return;
+      }
+      if (planet.state != Core.States.barren) {
+        this.respond('This planet is very much alive!');
+        return;
+      }
+      formatter.format_planet(planet, (name || old_name));
+      this.respond('Formatter sent!');
+    } else {
+      // renaming existing planet
+      if (planet.state != Core.States.player)
+        return this.respond('Not yours!');
+      if (!name)
+        return;
+      planet.name = name;
     }
-    if (planet.state != Core.States.barren) {
-      this.respond('This planet is very much alive!');
-      return;
-    }
-    formatter.format_planet(planet, name);
-    this.respond('Formatter sent!');
   }
 }
 
@@ -469,14 +494,33 @@ class ships_screen extends screen {
       bay.dataset.bay_n = i;
       this.onclick(bay, this.select_ship_bay);
     }
-    
-    const buttons = document.querySelector('#ships .moves').children;
-    this.onclick(buttons[0], this.launch_ship);
-    this.onclick(buttons[1], this.send_ship);
-    this.onclick(buttons[2], this.dock_ship);
+
+    {
+      const buttons = document.querySelector('#ships .moves').children;
+      this.onclick(buttons[0], this.launch_ship);
+      this.onclick(buttons[1], this.send_ship);
+      this.onclick(buttons[2], this.dock_ship);
+    }
+    {
+      const buttons = document.querySelector('#ships .right').children;
+      this.onclick(buttons[0], this.cancel_journey);
+      this.onclick(buttons[1], this.ask_rename);
+    }
+
+    this.name_input = new name_input(document.querySelector('#ships .right'),
+                                     this.rename_ship.bind(this));
   
     this.display();
     show('ships');
+  }
+
+  get current() {
+    const ship = this.current_ship;
+    if (ship && !ship.type) {
+      this.current_ship = null;
+      ship = null;
+    }
+    return ship;
   }
 
   display() {
@@ -493,7 +537,7 @@ class ships_screen extends screen {
         else b.textContent = '';
       }
     }
-    const ship = this.current_ship;
+    const ship = this.current;
     const state_box = document.querySelector('#ships .shipstate');
     if (ship) {
       const planet = ship.location;
@@ -517,7 +561,7 @@ class ships_screen extends screen {
 
   launch_ship(ev) {
     if (this.sending) return;
-    const ship = this.current_ship;
+    const ship = this.current;
     if (ship) {
       const result = ship.launch();
       if (result.is_error) {
@@ -528,7 +572,7 @@ class ships_screen extends screen {
     console.log(this.game.consistency_check());
   }
   send_ship(ev) {
-    const ship = this.current_ship;
+    const ship = this.current;
     if (ship?.state == Core.ShipState.orbit) {
       this.sending = true;
       this.ship_message = new temp_message('Select the planet to fly to.');
@@ -539,7 +583,7 @@ class ships_screen extends screen {
 
   dock_ship(ev) {
     if (this.sending) return;
-    const ship = this.current_ship;
+    const ship = this.current;
     if (ship?.state == Core.ShipState.orbit) {
       const result = ship.location?.dock_ship(ship);
       if (result.is_error) {
@@ -555,33 +599,56 @@ class ships_screen extends screen {
     if (this.sending) return;
     const i = ev.target.dataset.bay_n;
     const ship = this.ship_bays[i];
-    if (ship) {
-      this.current_ship = ship;
-      this.display();
-    }
+    if (!ship.type) ship = this.ship_bays[i] = null;
+    if (ship)
+      this.ship_selected(ship);
   }
 
   select_ship_cell(ev) {
     if (this.sending) return this.complete_send(ev);
     const i = ev.target.dataset.n;
     const ship = this.ship_list[i];
-    if (ship) {
+    if (ship)
+      this.ship_selected(ship);
+  }
+
+  ship_selected(ship) {
+    if (this.current_ship != ship) {
       this.current_ship = ship;
+      if (ship.state == Core.ShipState.docked)
+        ws.planet_selected(ship.location);
       this.display();
     }
   }
-
   complete_send(ev) {
     const p = this.game.planets[ev.target.dataset.n];
     var result;
     if (p.state == Core.States.barren) return;
-    result = this.current_ship.send(p);
+    if (this.current)
+      result = this.current.send(p);
+    else result = Core.error('ship no longer exists');
 
     this.sending = false;
     this.ship_message = null;
     if (result.is_error)
       this.ship_message = new temp_message(result.text, 64);
     this.display();
+  }
+
+  cancel_journey() {}
+  ask_rename() {
+    this.renaming = this.current;
+    if (this.renaming) {
+      this.name_input.show(this.renaming.name);
+    }
+  }
+  rename_ship(name) {
+    this.name_input.hide();
+    const ship = this.renaming;
+    this.renaming = null;
+    if (name && ship && ship.type) {
+      ship.name = name;
+    }
   }
 
   ship_state_message(ship) {
@@ -618,6 +685,7 @@ class buy_ship_screen extends screen {
     this.inputs = {
       info: document.querySelectorAll('#buy .buyinfo > div'),
       description: description,
+      response: document.querySelector('#buy .nav .message'),
       type: document.querySelector('#buy .buytype'),
       prompt: prompt
     };
@@ -654,6 +722,7 @@ class buy_ship_screen extends screen {
     if (!this.buying)
       this.inputs.description.textContent = it.description;
     this.inputs.type.textContent = 'TYPE : ' + it.name;
+    this.inputs.response.textContent = this.response?.string || '';
   }
 
   prev_ship_type(ev) {
@@ -737,6 +806,7 @@ class docking_screen extends screen {
 
   display() {
     this.continue_unloading();
+
     this.inputs.planet.textContent = this.current_planet?.name || '';
     this.ship_bays = this.current_planet?.bays || [];
     display_bays(this.inputs.bays.children, this.ship_bays);
@@ -744,6 +814,9 @@ class docking_screen extends screen {
     if ((!this.current_ship) && (real_ships.length == 1))
       this.current_ship = real_ships[0];
     let data = [];
+    if ((this.current_ship?.location != this.current_planet) ||
+        (this.current_ship?.state != Core.ShipState.docked))
+      this.current_ship = null;
     if (this.current_ship?.state == Core.ShipState.docked) {
       data = [
         this.current_ship.name,
@@ -874,7 +947,13 @@ class docking_screen extends screen {
       this.current_planet.unload_ship(this.current_ship, commodity, 1);
     }
   }
-  scrap(ev) {}
+  scrap(ev) {
+    if (this.current_planet && this.current_ship) {
+      this.game.scrap_ship(this.current_ship);
+      this.current_ship = null;
+      this.display();
+    }
+  }
 }
 
 /* Planet Surface screen */
