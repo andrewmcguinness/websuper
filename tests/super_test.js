@@ -16,7 +16,7 @@ Deno.test("format", () => {
   const sb = game.planet(31);
   const atm = game.buy_ship(ShipTypeData.atmos, 'ATMOS1');
   const p = game.planet(29);
-  atm.send(p);
+  atm.format_planet(p, 'TESTF');
   assertEquals(p.state, States.barren);
   game.tick_all(); game.tick_all();
   assertEquals(p.state, States.formatting);
@@ -88,7 +88,7 @@ Deno.test("travel", () => {
   const game = new Super();
   const atm = game.buy_ship(ShipTypeData.atmos, 'ATMOS1');
   const p = game.planet(game.starbase.n - 1);
-  atm.send(p);
+  atm.format_planet(p, 'TEST_T');
   for (let i = 0; i < 16; ++i) game.tick_all();
   assertEquals(p.state, States.player);
   const frm = game.buy_ship(ShipTypeData.farming, 'FARM1');

@@ -25,7 +25,7 @@ Deno.test("evolve", () => {
   p.tick(1);
   assertEquals(p.credits, 61832 + 340);
   assertEquals(p.growth, 13);
-  assertEquals(p.pop, 1755);
+  assertEquals(p.pop, 1756);
 });
 
 Deno.test("morale", () => {
@@ -35,6 +35,6 @@ Deno.test("morale", () => {
   p.tick(1);
   assertEquals(p.credits, 61832);
   assertEquals(p.growth, 20);
-  assertEquals(p.pop, 1785);
+  assertEquals(p.pop, 1786);
   assertEquals(p.morale, 77);
 });

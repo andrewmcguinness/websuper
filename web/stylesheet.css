@@ -9,6 +9,11 @@ body > div.visible {
 hr {
     width: 100%
 }
+nav {
+    display: grid;
+    grid-template-columns: repeat(9, 1fr);
+    column-gap: 1ex;
+}
 #planet {
     height: 15em;
     column-count: 3;
@@ -26,8 +31,14 @@ hr {
     display: flex;
     flex-direction: column;
 }
-#nav {
+.nav {
     display: flex;
+    justify-content: space-between;
+}
+.nav button {
+    flex-grow: 1;
+}
+#econ .nav {
     flex-direction: column;
 }
 #areas {
@@ -149,17 +160,17 @@ label {
     display: flex;
 }
 #ships .nav {
-    display: flex;
     flex-direction: column;
     justify-content: space-around;
 }
 #ships .shiptable {
     display: block;
     column-count: 4;
+    flex-grow: 1;
 }
 #ships .shiptable > div {
     display: block;
-    width: 10em;
+    width: 7em;
     height: 1.5em;
     font-size: small;
     font-weight: bold;
@@ -169,8 +180,22 @@ label {
     border-bottom: 2px solid purple;
     border-right: 2px solid purple;
 }
-#buy > div.nav {
-    display: flex;
+#ships .heading {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    flex-grow: 0;
+}
+.heading h2 {
+    width: 10em;
+    grid-column: span 2;
+    text-align: center;
+    margin: 4px;
+}
+.heading div {
+    width: 7em;
+}
+.heading div:nth-of-type(odd) {
+    text-align:right;
 }
 #buy > div.info {
     display: block;
@@ -202,7 +227,7 @@ div.buyinfo > div:nth-of-type(odd) {
     padding: 3px 1ex;
     border: 2px solid white;
 }
-div#docking .ship div div {
+div#dock .ship div div {
    text-align: right;
     margin-right: 1ex;
     display: block;
@@ -215,11 +240,11 @@ div#docking .ship div div {
     padding: 3px 1ex;
     border: 2px solid white;
 }
-#docking div.ship, div.top {
+#dock div.ship, div.top {
     display: flex;
     flex-direction: row;
 }
-#docking div.ship div {
+#dock div.ship div {
     display: grid;
     grid-template-columns: 1fr 1fr;
 }
