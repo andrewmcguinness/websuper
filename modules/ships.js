@@ -30,9 +30,6 @@ class Ship {
     this.cash_value = type.resale;
   };
 
-  // placeholder for now
-  messages = [];
-
   get uses_fuel() { return (this.type.tank != 0); }
 
   get total_cargo() {
@@ -50,6 +47,7 @@ class Ship {
   send(planet) {
     if (this.state == ShipState.orbit) {
       const distance = Math.abs(planet.n - this.location.n);
+      if (distance === 0) return Core.error("Already there");
       const fuel_needed = distance*(Core.flags.valve?25:50);
       if (this.uses_fuel && (fuel_needed > this.fuel)) {
         return Core.error("Not enough fuel");
@@ -171,7 +169,8 @@ class Ship {
         this.fuel -= Core.flags.valve?25:50;
         if (this.fuel < 0) this.fuel = 0;
       }
-      if (--this.travel_time == 0) {
+      if (--this.travel_time <= 0) {
+        this.travel_time = 0;
         this.state = ShipState.orbit;
         this.location = this.dest;
         this.location.orbit.push(this);
@@ -179,6 +178,18 @@ class Ship {
       }
     }
     return false;
+  }
+
+  cancel_journey() {
+    if (this.state != ShipState.transit)
+      return Core.error('Not in transit');
+    const distance = this.dest.n - this.location.n;
+    const step = Math.sign(distance);
+    const now = this.dest.n - (step * this.travel_time);
+    this.state == ShipState.orbit;
+    this.dest = null;
+    this.travel_time = 0;
+    return now;
   }
 
   tick() {
@@ -203,7 +214,7 @@ class Farming extends Ship {
           this.location.add_resource("food", food);
         } else {
           this.active = false;
-          this.messages.add('Run out of energy on ' + this.location.name);
+//          this.messages.add('Run out of energy on ' + this.location.name);
         }
       }
     }
@@ -229,7 +240,7 @@ class Mining extends Ship {
           this.location.add_resource("fuel", fuel);
         } else {
           this.active = false;
-          this.messages.add('Run out of energy on ' + this.location.name);
+//          this.messages.add('Run out of energy on ' + this.location.name);
         }
       }
     }

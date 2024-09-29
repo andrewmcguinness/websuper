@@ -38,14 +38,14 @@ nav {
 .nav button {
     flex-grow: 1;
 }
-#econ .nav {
+#govt .nav {
     flex-direction: column;
 }
 #areas {
     display: flex;
     justify-content: space-between;
 }
-#econships {
+#govtships {
     display: grid;
     grid-template-columns: 80px 80px 80px;
 }

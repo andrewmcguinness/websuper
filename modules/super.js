@@ -146,6 +146,18 @@ export class Super {
     else return Core.error("No free docking bay");
   }
 
+  cancel_ship_journey(ship) {
+    const position = ship.cancel_journey();
+    if (position.is_error) return position;
+    const planet = this.planets[position];
+    if (planet) {
+      ship.location = planet;
+      planet.orbit.push(ship);
+      return ship;
+    }
+    return Core.error('lost ship');
+  }
+
   consistency_check() {
     const err = Log.error;
     let ship_count = 0;

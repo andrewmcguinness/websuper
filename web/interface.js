@@ -42,13 +42,13 @@ class view {
 
   init() {
     this.main = new main_screen(this.game);
-    this.economy = new economy_screen(this.game);
+    this.government = new government_screen(this.game);
     this.ships = new ships_screen(this.game);
     this.buy = new buy_ship_screen(this.game);
     this.docking = new docking_screen(this.game);
     this.surface = new surface_screen(this.game);
 
-    this.screens = [ this.main, this.economy, this.ships,
+    this.screens = [ this.main, this.government, this.ships,
                      this.buy, this.docking, this.surface ];
 
     const navbar = document.querySelector('nav');
@@ -304,19 +304,23 @@ class main_screen extends screen {
 
     const navbuttons = document.querySelectorAll('#main .nav button');
     const navs = [
-      'econ',
+      'govt',
       'buy',
       'ships',
-      'atmos',
+      null, //'atmos',
       'army',
       'bays',
       'surface',
       'battle',
-      'spy',
+      null, //'spy',
       'save'
     ];
     this.link_navigation(navs);
     // todo navbutton for atmos
+    this.formatter = new formatter_interface(this,
+                                             navbuttons[3],
+                                             document.querySelector('#main .prompt'));
+
   }
   display() {
     this.inputs.date.textContent = this.game.datestr;
@@ -345,15 +349,15 @@ class main_screen extends screen {
   }
 }
 
-/* economy screen */
+/* government screen */
 
-class economy_screen extends screen {
+class government_screen extends screen {
   constructor(game) {
-    super(game, 'econ');
+    super(game, 'govt');
     this.current_planet = game.starbase;
     const map = {};
     map.readouts = [];
-    for (let block of economy_screen.fields) {
+    for (let block of government_screen.fields) {
       const div = document.createElement('div');
       div.classList.add('displayblock');
       for (let [f,l] of Object.entries(block)) {
@@ -410,7 +414,7 @@ class economy_screen extends screen {
     this.selected_area = 'surface';
 
     this.link_navigation([null, 'ships', 'dock']);
-    map.response = document.querySelector('#econ .message');
+    map.response = document.querySelector('#govt .message');
     this.inputs = map;
     
     this.food_direction = 0;
@@ -471,7 +475,7 @@ class economy_screen extends screen {
   }
   display_ships() {
     const ships = this.current_planet[this.selected_area].filter(x => x).slice(0, 6);
-    const boxes = document.getElementById('econships').children;
+    const boxes = document.getElementById('govtships').children;
     document.getElementById('arealabel').textContent = `SHIPS IN ${this.selected_area}`;
     for (let i = 0; i < 6; ++i) {
       if (ships.length > 0)
@@ -582,7 +586,7 @@ class ships_screen extends screen {
     this.name_input = new name_input(document.querySelector('#ships .right'),
                                      this.rename_ship.bind(this));
 
-    this.link_navigation([ null, 'buy', 'dock', 'surface', 'econ', null ]);
+    this.link_navigation([ null, 'buy', 'dock', 'surface', 'govt', null ]);
     this.display();
   }
 
@@ -724,7 +728,19 @@ class ships_screen extends screen {
     this.display();
   }
 
-  cancel_journey() {}
+  cancel_journey() {
+    if (this.current_ship?.state != Core.ShipState.transit) {
+      this.ship_message = new temp_message('Not in transit', 64)
+    } else {
+      const result = this.game.cancel_ship_journey(this.current_ship);
+      if (result.is_error) {
+        this.ship_message = new temp_message(result.text, 64);
+      } else {
+        this.display();
+      }
+    }
+  }
+
   ask_rename() {
     this.renaming = this.current;
     if (this.renaming) {
@@ -841,6 +857,7 @@ class buy_ship_screen extends screen {
     if (result.is_error) {
       this.respond(result.text);
     }
+    ws.planet_selected(this.game.starbase);
     this.display();
   }
 }
@@ -878,7 +895,7 @@ class docking_screen extends screen {
       this.onhold(gauges[i*5+1], ev => this.unload(commodities[i]));
       this.onhold(gauges[i*5+3], ev => this.load(commodities[i]));
     }
-    this.link_navigation(['ships', 'surface', 'econ', 'buy', null]);
+    this.link_navigation(['ships', 'surface', 'govt', 'buy', null]);
     this.inputs = {
       type: ship_things.children[0],
       passengers: passenger_block.querySelector('div'),
@@ -1065,7 +1082,7 @@ class surface_screen extends screen {
       this.onclick(slot.children[1], this.undeploy);
     }
     this.messagebox = document.querySelector('#surface div.message');
-    this.link_navigation(['buy', 'econ', 'ships', 'dock']);
+    this.link_navigation(['buy', 'govt', 'ships', 'dock']);
     this.current_planet = this.game.starbase;
   }
 
